@@ -1,0 +1,7 @@
+
+pip
+autopep8
+flask
+firebase_admin
+qrcode[pil]
+pillow
