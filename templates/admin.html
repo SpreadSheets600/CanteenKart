@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Admin Dashboard - CanteenKart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-br from-gray-50 to-blue-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-lg border-b-4 border-blue-500">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-tachometer-alt text-blue-600 text-2xl"></i>
+          <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-blue-100 px-4 py-2 rounded-lg">
+            <span class="text-blue-800 font-semibold">{{ orders|length }} Orders</span>
+          </div>
+          <a href="{{ url_for('index') }}" class="text-blue-600 hover:text-blue-800">
+            <i class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {% set pending_orders = orders.values()|selectattr("status", "equalto", "pending")|list %}
+      {% set ready_orders = orders.values()|selectattr("status", "equalto", "ready")|list %}
+
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm">Pending Orders</p>
+            <p class="text-3xl font-bold text-orange-600">{{ pending_orders|length }}</p>
+          </div>
+          <i class="fas fa-clock text-orange-600 text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm">Ready Orders</p>
+            <p class="text-3xl font-bold text-green-600">{{ ready_orders|length }}</p>
+          </div>
+          <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-600 text-sm">Total Revenue</p>
+            <p class="text-3xl font-bold text-blue-600">${{ "%.2f" | format(orders.values()|sum(attribute='total')) }}
+            </p>
+          </div>
+          <i class="fas fa-dollar-sign text-blue-600 text-2xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders List -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-list-alt mr-3 text-blue-600"></i>
+        Incoming Orders
+      </h2>
+
+      {% if orders %}
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for order_id, order in orders.items() %}
+        <div
+          class="border-2 {% if order.status == 'pending' %}border-orange-200 bg-orange-50{% else %}border-green-200 bg-green-50{% endif %} rounded-xl p-6 hover:shadow-lg transition-shadow">
+          <!-- Order Header -->
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">Token
+                <p class="text-sm text-gray-600">{{ order.timeSlot }}</p>
+            </div>
+            <div class="text-right">
+              {% if order.status == 'pending' %}
+              <span class="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-semibold">
+                <i class="fas fa-clock mr-1"></i>Pending
+              </span>
+              {% else %}
+              <span class="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                <i class="fas fa-check mr-1"></i>Ready
+              </span>
+              {% endif %}
+            </div>
+          </div> <!-- Order Items -->
+          <div class="mb-4">
+            <h4 class="font-semibold text-gray-700 mb-2">Items:</h4>
+            <div class="space-y-1">
+              {% for item_id, item in order.order_items.items() %}
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">{{ item.quantity }}× {{ item.name }}</span>
+                <span class="text-gray-800 font-medium">${{ "%.2f" | format(item.price * item.quantity) }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Order Total -->
+          <div class="border-t pt-3 mb-4">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-gray-800">Total:</span>
+              <span class="text-xl font-bold text-green-600">${{ "%.2f" | format(order.total) }}</span>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          {% if order.status == 'pending' %}
+          <a href="{{ url_for('mark_ready', order_id=order_id) }}"
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <i class="fas fa-check"></i>
+            <span>Mark as Ready</span>
+          </a>
+          {% else %}
+          <button
+            class="w-full bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg cursor-not-allowed flex items-center justify-center space-x-2"
+            disabled>
+            <i class="fas fa-check-circle"></i>
+            <span>Order Ready</span>
+          </button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <i class="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
+        <p class="text-gray-600 text-xl">No orders yet</p>
+        <p class="text-gray-500">Orders will appear here when customers place them</p>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    setInterval(() => {
+      window.location.reload();
+    }, 30000);
+
+    let lastOrderCount = {{ orders| length }};
+
+    function checkForNewOrders() {
+      fetch('/admin')
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newOrderCount = doc.querySelectorAll('[data-order]').length;
+
+          if (newOrderCount > lastOrderCount) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('New Order Received!', {
+                body: 'A new order has been placed.',
+                icon: '/static/favicon.ico'
+              });
+            }
+            lastOrderCount = newOrderCount;
+          }
+        })
+        .catch(error => console.error('Error checking for new orders:', error));
+    }
+
+    if ('Notification' in window) {
+      Notification.requestPermission();
+    }
+
+    setInterval(checkForNewOrders, 10000);
+  </script>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>
