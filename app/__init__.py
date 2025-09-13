@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask
 
 from .config import Config
 from .extensions import db, login_manager
@@ -13,7 +13,29 @@ def create_app(config_object: str | object = Config):
 
     from .blueprints.auth.routes import auth as auth_blueprint
 
-    app.register_blueprint(auth_blueprint)
+    # Register auth blueprint at root so routes like /signup, /login, /logout work
+    app.register_blueprint(auth_blueprint, url_prefix="")
+
+    # simple home route
+    from flask import session, render_template
+    from .models.user import User
+
+    @app.route("/")
+    def home():
+        return render_template("home.html")
+
+    @app.context_processor
+    def inject_user():
+        # ensure session has user_name for templates
+        user_name = session.get("user_name")
+        if session.get("user_id") and not user_name:
+            try:
+                user = User.query.get(int(session.get("user_id")))
+                if user:
+                    session["user_name"] = user.name
+            except Exception:
+                pass
+        return {}
 
     @app.errorhandler(404)
     def page_not_found(e):

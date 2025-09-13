@@ -1,0 +1,7 @@
+{% extends 'base.html' %} {% block title %}Home - CanteenKart{% endblock %} {% block content %}
+<h1>Welcome{% if session.get('user_id') %}, {{ session.get('user_name', '') }}{% endif %}!</h1>
+{% if session.get('role') == 'owner' %}
+<p><a href="/dashboard">Go to Dashboard</a></p>
+{% else %}
+<p><a href="/menu">Browse Menu</a></p>
+{% endif %} {% endblock %}

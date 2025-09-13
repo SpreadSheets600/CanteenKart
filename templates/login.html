@@ -1,0 +1,9 @@
+{% extends 'base.html' %} {% block title %}Login - CanteenKart{% endblock %} {% block content %}
+<h1>Login</h1>
+<form method="post" action="{{ url_for('login') }}">
+	<label>Phone: <input type="text" name="phone" pattern="\d{10}" required /></label><br />
+	<label>Password: <input type="password" name="password" required /></label><br />
+	<button type="submit">Login</button>
+</form>
+<p>New? <a href="{{ url_for('signup') }}">Sign up</a></p>
+{% endblock %}
