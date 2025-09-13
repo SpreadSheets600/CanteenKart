@@ -13,5 +13,6 @@ dependencies = [
     "flask-sqlalchemy>=3.1.1",
     "pillow>=11.3.0",
     "pip>=25.2",
+    "pytest>=8.4.2",
     "qrcode[pil]>=8.2",
 ]

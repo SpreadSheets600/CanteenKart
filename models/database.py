@@ -1,3 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
+"""Compatibility shim: expose db for code importing models.database.db"""
 
-db = SQLAlchemy()
+from app.extensions import db
+
+__all__ = ["db"]
