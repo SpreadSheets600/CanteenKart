@@ -9,4 +9,5 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-
+    ADMIN_PHONE = os.environ.get("ADMIN_PHONE", "0000000000")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "adminpass")

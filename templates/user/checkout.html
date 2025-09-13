@@ -1,0 +1,23 @@
+{% extends 'base.html' %} {% block title %}Checkout - CanteenKart{% endblock %} {% block content %}
+<h1>Checkout</h1>
+<form method="post">
+	<h3>Items</h3>
+	<ul>
+		{% for row in items %}
+		<li>{{ row.item.name }} x {{ row.qty }} = ₹{{ '%.2f'|format(row.subtotal) }}</li>
+		{% endfor %}
+	</ul>
+	<p>Total: ₹{{ '%.2f'|format(total) }}</p>
+
+	<label
+		>Pickup Slot:
+		<select name="pickup_slot">
+			<option value="slot1">In 10 minutes</option>
+			<option value="slot2">In 20 minutes</option>
+			<option value="slot3">In 30 minutes</option>
+		</select>
+	</label>
+
+	<button type="submit">Place Order</button>
+</form>
+{% endblock %}

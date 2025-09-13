@@ -1,0 +1,54 @@
+{% extends 'base.html' %} {% block content %}
+<h2>User Dashboard</h2>
+
+<section>
+	<h3>Wallet</h3>
+	{% if wallet %}
+	<p>Balance: {{ '%.2f'|format(wallet.balance) }}</p>
+	{% else %}
+	<p>No wallet found.</p>
+	{% endif %}
+</section>
+
+<section>
+	<h3>Your Stats</h3>
+	<p>Total Orders: {{ total_orders }}</p>
+	<p>Total Spent: {{ '%.2f'|format(total_spent) }}</p>
+	<p>Average Order: {{ '%.2f'|format(avg_order) }}</p>
+	<p>Last Order: {{ last_order.created_at if last_order else '-' }}</p>
+</section>
+
+{% if last_order %}
+<section>
+	<h3>Last Order Details (Order #{{ last_order.order_id }})</h3>
+	<ul>
+		{% for oi in last_order_items %}
+		<li>{{ oi.menu_item.name if oi.menu_item else oi.item_id }} x {{ oi.quantity }} — {{ '%.2f'|format((oi.price or 0.0) * (oi.quantity or 0)) }}</li>
+		{% endfor %}
+	</ul>
+</section>
+{% endif %}
+
+<section>
+	<h3>Recent Orders</h3>
+	<ul>
+		{% for o in orders %}
+		<li>Order #{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</li>
+		{% else %}
+		<li>No recent orders.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Recent Activity</h3>
+	<ul>
+		{% for a in activities %}
+		<li>{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
+		{% else %}
+		<li>No recent activity.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %} {% block title %}Owner Menu - CanteenKart{% endblock %} {% block content %}
+<h1>Owner Menu Management</h1>
+
+<h2>Add Item</h2>
+<form action="{{ url_for('menu.add_item') }}" method="post">
+	<label>Name: <input name="name" required /></label>
+	<label>Price: <input name="price" type="number" step="0.01" required /></label>
+	<label>Stock Qty: <input name="stock_qty" type="number" value="0" /></label>
+	<label>Available: <input name="is_available" type="checkbox" checked /></label>
+	<label>Description: <input name="description" /></label>
+	<button type="submit">Add</button>
+</form>
+
+<h2>Existing Items</h2>
+<table>
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>Name</th>
+			<th>Price</th>
+			<th>Stock</th>
+			<th>Available</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in items %}
+		<tr>
+			<td>{{ item.item_id }}</td>
+			<td>{{ item.name }}</td>
+			<td>₹{{ '%.2f'|format(item.price) }}</td>
+			<td>{{ item.stock_qty }}</td>
+			<td>{{ 'Yes' if item.is_available else 'No' }}</td>
+			<td>
+				<form action="{{ url_for('menu.edit_item', item_id=item.item_id) }}" method="post" style="display: inline">
+					<input name="name" value="{{ item.name }}" />
+					<input name="price" value="{{ item.price }}" />
+					<input name="stock_qty" value="{{ item.stock_qty }}" />
+					<label>Available<input type="checkbox" name="is_available" {% if item.is_available %}checked{% endif %} /></label>
+					<button type="submit">Edit</button>
+				</form>
+				<form action="{{ url_for('menu.delete_item', item_id=item.item_id) }}" method="post" style="display: inline">
+					<button type="submit" onclick="return confirm('Delete item?')">Delete</button>
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+{% endblock %}

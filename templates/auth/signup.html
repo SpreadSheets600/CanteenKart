@@ -1,0 +1,27 @@
+{% extends 'base.html' %} {% block title %}Sign Up - CanteenKart{% endblock %} {% block content %}
+<h2>Sign Up</h2>
+<form method="post" action="{{ url_for('auth.register') }}">
+	<label
+		>Phone (10 digits)<br />
+		<input type="text" name="phone" maxlength="10" required />
+	</label>
+	<br />
+	<label
+		>Name<br />
+		<input type="text" name="name" required />
+	</label>
+	<br />
+	<label
+		>Password<br />
+		<input type="password" name="password" required />
+	</label>
+	<br />
+	<label
+		>Confirm Password<br />
+		<input type="password" name="password2" required />
+	</label>
+	<br />
+	<button type="submit">Sign Up</button>
+</form>
+<p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+{% endblock %}

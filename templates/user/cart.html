@@ -1,0 +1,18 @@
+{% extends 'base.html' %} {% block title %}Cart - CanteenKart{% endblock %} {% block content %}
+<h1>Your Cart</h1>
+{% if items %}
+<ul>
+	{% for row in items %}
+	<li>
+		{{ row.item.name }} x {{ row.qty }} = ₹{{ '%.2f'|format(row.subtotal) }}
+		<form action="{{ url_for('cart.remove_from_cart', item_id=row.item.item_id) }}" method="post" style="display: inline">
+			<button type="submit">Remove</button>
+		</form>
+	</li>
+	{% endfor %}
+</ul>
+<p>Total: ₹{{ '%.2f'|format(total) }}</p>
+<p><a href="{{ url_for('cart.checkout') }}">Proceed to Checkout</a></p>
+{% else %}
+<p>Your cart is empty.</p>
+{% endif %} {% endblock %}

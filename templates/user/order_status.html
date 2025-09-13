@@ -1,0 +1,22 @@
+{% extends 'base.html' %} {% block title %}Order Status - CanteenKart{% endblock %} {% block content %}
+<h1>Order #{{ order.order_id }}</h1>
+<p>Token: {{ order.token_code }}</p>
+<div id="status">{{ order.status }}</div>
+
+<!-- Socket.IO client will be added to listen for updates -->
+{% if config.ENABLE_SOCKETIO %}
+<script src="/socket.io/socket.io.js"></script>
+<script>
+	const socket = io();
+	socket.on('connect', () => {
+		// join will happen server-side based on session cookie
+		console.log('socket connected');
+	});
+		const THIS_ORDER_ID = {{ order.order_id | tojson }};
+		socket.on('order_update', (data) => {
+			if (data && data.order_id === THIS_ORDER_ID) {
+				document.getElementById('status').innerText = data.status;
+			}
+		});
+</script>
+{% endif %} {% endblock %}

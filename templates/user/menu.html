@@ -1,0 +1,20 @@
+{% extends 'base.html' %} {% block title %}Menu - CanteenKart{% endblock %} {% block content %}
+<h1>Menu</h1>
+<div class="card-grid">
+	{% for item in items %}
+	<div class="card">
+		<h3>{{ item.name }}</h3>
+		<p>{{ item.description or '' }}</p>
+		<p>Price: ₹{{ '%.2f'|format(item.price) }}</p>
+		<p>Stock: {{ item.stock_qty }}</p>
+		{% if item.is_available %}
+		<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post">
+			<button type="submit">Add to Cart</button>
+		</form>
+		{% else %}
+		<button disabled>Unavailable</button>
+		{% endif %}
+	</div>
+	{% endfor %}
+</div>
+{% endblock %}

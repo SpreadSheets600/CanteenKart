@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask import session
 
 from models.database import db
 from models.models import User, Wallet
@@ -13,7 +14,7 @@ auth = Blueprint(
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        return redirect(url_for("home"))
 
     if request.method == "POST":
         phone = request.form.get("phone")
@@ -21,7 +22,7 @@ def login():
 
         if not phone or not password:
             flash("Phone And Password Are Required!", "warning")
-            return render_template("auth.html")
+            return render_template("auth/login.html")
 
         user = User.query.filter_by(phone=phone).first()
         if (
@@ -30,19 +31,33 @@ def login():
             and check_password_hash(user.password_hash, password)
         ):
             login_user(user)
+
+            session["user_id"] = user.get_id()
+            session["user_name"] = user.name
+            session["role"] = user.role
+
             flash("Logged In Successfully!", "success")
+
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("index"))
+            return redirect(next_page or url_for("home"))
 
         flash("Invalid Phone Or Password!", "danger")
 
-    return render_template("auth.html")
+    return render_template("auth/login.html")
 
 
 @auth.route("/logout")
 @login_required
 def logout():
-    logout_user()
+    try:
+        logout_user()
+    except Exception:
+        pass
+
+    session.pop("user_id", None)
+    session.pop("user_name", None)
+    session.pop("role", None)
+
     flash("Logged Out!", "info")
     return redirect(url_for("auth.login"))
 
@@ -50,7 +65,7 @@ def logout():
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        return redirect(url_for("home"))
 
     if request.method == "POST":
         phone = request.form.get("phone")
@@ -59,11 +74,11 @@ def register():
 
         if not phone or not password:
             flash("Phone And Password Are Required!", "warning")
-            return render_template("auth.html")
+            return render_template("auth/signup.html")
 
         if User.query.filter_by(phone=phone).first():
             flash("Phone Already Registered!", "warning")
-            return render_template("auth.html")
+            return render_template("auth/signup.html")
 
         user = User(
             phone=phone,
@@ -81,4 +96,4 @@ def register():
         flash("Registration Successfully Please Log In!", "success")
         return redirect(url_for("auth.login"))
 
-    return render_template("auth.html")
+    return render_template("auth/signup.html")

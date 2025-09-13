@@ -1,0 +1,45 @@
+{% extends 'base.html' %} {% block content %}
+<h2>User: {{ user.name }} ({{ user.user_id }})</h2>
+<p>Phone: {{ user.phone }}</p>
+<p>Role: {{ user.role }}</p>
+
+<section>
+	<h3>Wallet</h3>
+	{% if wallet %}
+	<p>Balance: {{ '%.2f'|format(wallet.balance) }}</p>
+	{% else %}
+	<p>No wallet.</p>
+	{% endif %}
+</section>
+
+<section>
+	<h3>Stats</h3>
+	<p>Total Orders: {{ total_orders }}</p>
+	<p>Total Spent: {{ '%.2f'|format(total_spent) }}</p>
+	<p>Average Order: {{ '%.2f'|format(avg_order) }}</p>
+	<p>Last Order: {{ last_order_date or '-' }}</p>
+</section>
+
+<section>
+	<h3>Recent Orders</h3>
+	<ul>
+		{% for o in orders %}
+		<li>#{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</li>
+		{% else %}
+		<li>No orders.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Activity</h3>
+	<ul>
+		{% for a in activities %}
+		<li>{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
+		{% else %}
+		<li>No activity.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+{% endblock %}

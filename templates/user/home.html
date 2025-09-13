@@ -1,0 +1,9 @@
+{% extends 'base.html' %} {% block title %}Home - CanteenKart{% endblock %} {% block content %}
+<h1>Welcome to CanteenKart</h1>
+{% if session.get('user_id') %}
+<p>Hi {{ session.get('user_name') }}!</p>
+{% if session.get('role') == 'owner' %}{% else %}
+<p><a href="#">Browse Menu</a></p>
+{% endif %} {% else %}
+<p>Please <a href="{{ url_for('auth.login') }}">login</a> or <a href="{{ url_for('auth.register') }}">signup</a>.</p>
+{% endif %} {% endblock %}

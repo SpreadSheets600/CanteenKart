@@ -1,0 +1,54 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Owner Dashboard</h2>
+
+<section>
+	<h3>Summary (last days)</h3>
+	<ul>
+		{% for s in summaries %}
+		<li>{{ s.date }} - Orders: {{ s.total_orders }} - Revenue: {{ '%.2f'|format(s.total_revenue) }}</li>
+		{% else %}
+		<li>No summaries available.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Top Items</h3>
+	<ul>
+		{% for it in top_items %}
+		<li>{{ it.menu_item.name if it.menu_item else 'Unknown' }} - Sold: {{ it.total_sold }} - Revenue: {{ '%.2f'|format(it.total_revenue) }}</li>
+		{% else %}
+		<li>No item data.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Recent Feedback</h3>
+	<ul>
+		{% for f in recent_feedback %}
+		<li>{{ f.created_at }} - {{ f.user.name if f.user else 'Anon' }} - Rating: {{ f.rating }} - {{ f.comments }}</li>
+		{% else %}
+		<li>No feedback yet.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Recent Activity</h3>
+	<ul>
+		{% for a in recent_status %}
+		<li>{{ a.created_at }} - User: {{ a.user.name if a.user else a.user_id }} - Action: {{ a.action }}</li>
+		{% else %}
+		<li>No recent activity.</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Totals</h3>
+	<p>Total Orders: {{ total_orders }}</p>
+	<p>Total Revenue (shown days): {{ '%.2f'|format(total_revenue) }}</p>
+</section>
+
+{% endblock %}
