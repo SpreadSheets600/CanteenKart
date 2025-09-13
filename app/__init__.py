@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 
 from .config import Config
-from .extensions import db, login_manager
+from .extensions import db, login_manager, migrate
 
 
 def create_app(config_object: str | object = Config):
@@ -10,6 +10,7 @@ def create_app(config_object: str | object = Config):
 
     db.init_app(app)
     login_manager.init_app(app)
+    migrate.init_app(app, db)
 
     from .blueprints.auth.routes import auth as auth_blueprint
 
@@ -23,8 +24,8 @@ def create_app(config_object: str | object = Config):
     def server_error(e):
         return render_template("errors/500.html"), 500
 
-    with app.app_context():
-        db.create_all()
+    # Database tables are managed via Flask-Migrate (Alembic).
+    # Use `flask db upgrade` to create or migrate the schema.
 
     return app
 

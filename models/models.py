@@ -1,5 +1,3 @@
-"""Compatibility shim re-exporting models from the new app package."""
-
 from app.models.user import User
 from app.models.menu_item import MenuItem
 from app.models.order import Order, OrderItem
