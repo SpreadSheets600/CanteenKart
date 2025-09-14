@@ -5,18 +5,14 @@ from flask import (
     redirect,
     url_for,
     flash,
-    session,
 )
 
 from models.models import MenuItem
 from models.database import db
+from .utils import owner_only
 
 
 menu_bp = Blueprint("menu", __name__, template_folder="../templates", url_prefix="")
-
-
-def owner_required():
-    return session.get("role") == "owner"
 
 
 @menu_bp.route("/menu")
@@ -26,26 +22,25 @@ def menu():
 
 
 @menu_bp.route("/owner/menu")
+@owner_only
 def owner_menu():
-    if not owner_required():
-        flash("Owner access required", "danger")
-        return redirect(url_for("menu.menu"))
-
     items = MenuItem.query.order_by(MenuItem.item_id).all()
     return render_template("owner/owner_menu.html", items=items)
 
 
 @menu_bp.route("/owner/menu/add", methods=["POST"])
+@owner_only
 def add_item():
-    if not owner_required():
-        flash("Owner access required", "danger")
-        return redirect(url_for("menu.owner_menu"))
-
     name = (request.form.get("name") or "").strip()
-    price = float(request.form.get("price") or 0)
-
     description = request.form.get("description") or ""
-    stock_qty = int(request.form.get("stock_qty") or 0)
+    try:
+        price = float(request.form.get("price") or 0)
+    except Exception:
+        price = 0.0
+    try:
+        stock_qty = int(request.form.get("stock_qty") or 0)
+    except Exception:
+        stock_qty = 0
     is_available = bool(request.form.get("is_available"))
 
     if not name:
@@ -67,17 +62,20 @@ def add_item():
 
 
 @menu_bp.route("/owner/menu/edit/<int:item_id>", methods=["POST"])
+@owner_only
 def edit_item(item_id: int):
-    if not owner_required():
-        flash("Owner access required", "danger")
-        return redirect(url_for("menu.owner_menu"))
-
     item = MenuItem.query.get_or_404(item_id)
 
     item.name = (request.form.get("name") or item.name).strip()
-    item.price = float(request.form.get("price") or item.price)
+    try:
+        item.price = float(request.form.get("price") or item.price)
+    except Exception:
+        pass
     item.description = request.form.get("description") or item.description
-    item.stock_qty = int(request.form.get("stock_qty") or item.stock_qty)
+    try:
+        item.stock_qty = int(request.form.get("stock_qty") or item.stock_qty)
+    except Exception:
+        pass
     item.is_available = bool(request.form.get("is_available"))
 
     db.session.add(item)
@@ -88,11 +86,8 @@ def edit_item(item_id: int):
 
 
 @menu_bp.route("/owner/menu/delete/<int:item_id>", methods=["POST"])
+@owner_only
 def delete_item(item_id: int):
-    if not owner_required():
-        flash("Owner access required", "danger")
-        return redirect(url_for("menu.owner_menu"))
-
     item = MenuItem.query.get_or_404(item_id)
     db.session.delete(item)
     db.session.commit()

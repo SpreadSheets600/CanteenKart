@@ -164,3 +164,38 @@ def checkout():
 def order_status(order_id: int):
     order = Order.query.get_or_404(order_id)
     return render_template("user/order_status.html", order=order)
+
+
+@cart_bp.route("/order_status/<int:order_id>/qr.png")
+def order_status_qr(order_id: int):
+    """Return a QR code PNG for this order's token and status URL."""
+    order = Order.query.get_or_404(order_id)
+    try:
+        import qrcode
+        import io
+        from flask import send_file, request
+
+        # Encode both token and a deep link to the status page
+        base_url = request.url_root.rstrip("/")
+        status_url = f"{base_url}{url_for('cart.order_status', order_id=order.order_id)}"
+        payload = {
+            "order_id": order.order_id,
+            "token": order.token_code,
+            "url": status_url,
+        }
+
+        # Keep QR simple and compatible
+        qr = qrcode.QRCode(version=None, box_size=6, border=2)
+        import json as _json
+        qr.add_data(_json.dumps(payload, separators=(",", ":")))
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        return send_file(buf, mimetype="image/png", download_name=f"order_{order.order_id}_qr.png")
+    except Exception:
+        # Fallback: plain text if QR generation fails
+        from flask import Response
+        return Response("QR unavailable", status=503, mimetype="text/plain")

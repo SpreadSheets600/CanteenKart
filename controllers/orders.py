@@ -5,43 +5,43 @@ from flask import (
     redirect,
     url_for,
     flash,
-    session,
     current_app,
 )
 
 from models.models import Order
 from models.database import db
+from .utils import owner_only
 
 orders_bp = Blueprint(
     "owner_orders", __name__, template_folder="../templates", url_prefix=""
 )
 
 
-def owner_required():
-    return session.get("role") == "owner"
-
-
 @orders_bp.route("/owner/orders")
+@owner_only
 def list_orders():
-    if not owner_required():
-        flash("Owner Access Required", "danger")
-        return redirect(url_for("menu.menu"))
-
-    orders = Order.query.filter(Order.status.in_(["pending", "preparing"]))
+    from flask import request
+    q = Order.query
+    status = (request.args.get("status") or "").strip()
+    if status in {"pending", "preparing", "ready"}:
+        q = q.filter_by(status=status)
+    else:
+        q = q.filter(Order.status.in_(["pending", "preparing", "ready"]))
+    orders = q.order_by(Order.created_at.desc()).all()
     return render_template("owner/owner_orders.html", orders=orders)
 
 
 @orders_bp.route("/owner/orders/<int:order_id>/status", methods=["POST"])
+@owner_only
 def update_status(order_id: int):
-    if not owner_required():
-        flash("Owner Access Required", "danger")
-        return redirect(url_for("menu.menu"))
-
     order = Order.query.get_or_404(order_id)
-    status = request.form.get("status") or order.status
+    status = (request.form.get("status") or order.status).strip()
+
+    if status not in {"pending", "preparing", "ready", "completed", "cancelled"}:
+        flash("Invalid status", "warning")
+        return redirect(url_for("owner_orders.list_orders"))
 
     order.status = status
-
     db.session.add(order)
     db.session.commit()
 
