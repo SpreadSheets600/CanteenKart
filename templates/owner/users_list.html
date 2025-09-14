@@ -1,15 +1,10 @@
 {% extends 'base.html' %} {% block content %}
-<h2>Users</h2>
+<h2 class="text-2xl font-semibold mb-4">Users</h2>
 
-<table>
-	<thead>
-		<tr>
-			<th>ID</th>
-			<th>Name</th>
-			<th>Phone</th>
-			<th>Orders</th>
-			<th>Wallet</th>
-			<table>
+<div class="card bg-base-200 shadow">
+	<div class="card-body">
+		<div class="overflow-x-auto">
+			<table class="table">
 				<thead>
 					<tr>
 						<th>ID</th>
@@ -25,22 +20,26 @@
 				</thead>
 				<tbody>
 					{% for s in user_stats %}
-						<tr>
-							<td>{{ s.user.user_id }}</td>
-							<td>{{ s.user.name }}</td>
-							<td>{{ s.user.phone }}</td>
-							<td>{{ s.orders_count }}</td>
-							<td>{{ '%.2f'|format(s.total_spent) }}</td>
-							<td>{{ '%.2f'|format(s.avg_order) }}</td>
-							<td>{{ s.last_order_date or '-' }}</td>
-							<td>{{ '%.2f'|format(s.wallet.balance) if s.wallet else '0.00' }}</td>
-							<td><a href="{{ url_for('users.user_detail', user_id=s.user.user_id) }}">View</a></td>
-						</tr>
+					<tr>
+						<td>{{ s.user.user_id }}</td>
+						<td>{{ s.user.name }}</td>
+						<td>{{ s.user.phone }}</td>
+						<td>{{ s.orders_count }}</td>
+						<td>₹{{ '%.2f'|format(s.total_spent) }}</td>
+						<td>₹{{ '%.2f'|format(s.avg_order) }}</td>
+						<td>{{ s.last_order_date or '-' }}</td>
+						<td>₹{{ '%.2f'|format(s.wallet.balance) if s.wallet else '0.00' }}</td>
+						<td><a class="btn btn-ghost btn-sm" href="{{ url_for('owners.user_detail', user_id=s.user.user_id) }}">View</a></td>
+					</tr>
 					{% else %}
-						<tr><td colspan="9">No users</td></tr>
+					<tr>
+						<td colspan="9">No users</td>
+					</tr>
 					{% endfor %}
 				</tbody>
 			</table>
-</table>
+		</div>
+	</div>
+</div>
 
 {% endblock %}

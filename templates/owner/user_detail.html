@@ -1,45 +1,69 @@
 {% extends 'base.html' %} {% block content %}
-<h2>User: {{ user.name }} ({{ user.user_id }})</h2>
-<p>Phone: {{ user.phone }}</p>
-<p>Role: {{ user.role }}</p>
+<h2 class="text-2xl font-semibold mb-2">User: {{ user.name }} ({{ user.user_id }})</h2>
+<div class="opacity-80 mb-4">Phone: {{ user.phone }} · Role: {{ user.role }}</div>
 
-<section>
-	<h3>Wallet</h3>
-	{% if wallet %}
-	<p>Balance: {{ '%.2f'|format(wallet.balance) }}</p>
-	{% else %}
-	<p>No wallet.</p>
-	{% endif %}
-</section>
+<div class="grid md:grid-cols-3 gap-4">
+	<div class="md:col-span-2">
+		<div class="grid sm:grid-cols-3 gap-4 mb-4">
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Total Orders</div>
+				<div class="stat-value">{{ total_orders }}</div>
+			</div>
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Total Spent</div>
+				<div class="stat-value">₹{{ '%.2f'|format(total_spent) }}</div>
+			</div>
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Avg Order</div>
+				<div class="stat-value">₹{{ '%.2f'|format(avg_order) }}</div>
+			</div>
+		</div>
 
-<section>
-	<h3>Stats</h3>
-	<p>Total Orders: {{ total_orders }}</p>
-	<p>Total Spent: {{ '%.2f'|format(total_spent) }}</p>
-	<p>Average Order: {{ '%.2f'|format(avg_order) }}</p>
-	<p>Last Order: {{ last_order_date or '-' }}</p>
-</section>
+		<div class="card bg-base-200 shadow mb-4">
+			<div class="card-body">
+				<h3 class="card-title">Recent Orders</h3>
+				<ul class="space-y-1">
+					{% for o in orders %}
+					<li class="text-sm">#{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</li>
+					{% else %}
+					<li class="opacity-70">No orders.</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
 
-<section>
-	<h3>Recent Orders</h3>
-	<ul>
-		{% for o in orders %}
-		<li>#{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</li>
-		{% else %}
-		<li>No orders.</li>
-		{% endfor %}
-	</ul>
-</section>
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<h3 class="card-title">Activity</h3>
+				<ul class="space-y-1">
+					{% for a in activities %}
+					<li class="text-sm">{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
+					{% else %}
+					<li class="opacity-70">No activity.</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
 
-<section>
-	<h3>Activity</h3>
-	<ul>
-		{% for a in activities %}
-		<li>{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
-		{% else %}
-		<li>No activity.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div>
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<h3 class="card-title">Wallet</h3>
+				{% if wallet %}
+				<div class="stats shadow">
+					<div class="stat">
+						<div class="stat-title">Balance</div>
+						<div class="stat-value text-primary">₹{{ '%.2f'|format(wallet.balance) }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="alert">No wallet.</div>
+				{% endif %}
+				<div class="mt-4 text-sm opacity-70">Last Order: {{ last_order_date or '-' }}</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 {% endblock %}

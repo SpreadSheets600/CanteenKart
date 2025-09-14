@@ -1,93 +1,115 @@
 {% extends 'base.html' %} {% block content %}
-<h2>Owner Dashboard</h2>
+<h2 class="text-2xl font-semibold mb-4">Owner Dashboard</h2>
 
-<section>
-	<h3>KPIs</h3>
-	<ul>
-		<li>Active Orders: {{ active_orders }}</li>
-		<li>Revenue Today: {{ '%.2f'|format(revenue_today or 0) }}</li>
-		<li>Peak Hour (recent): {{ peak_hour if peak_hour is not none else '—' }}</li>
-	</ul>
-	<form method="post" action="{{ url_for('owners.set_open_state') }}">
-		<input type="hidden" name="state" value="{{ 'close' if canteen_open else 'open' }}" />
-		<button type="submit">{{ 'Close' if canteen_open else 'Open' }} Canteen</button>
-	</form>
-	<form method="post" action="{{ url_for('owners.set_announcement') }}">
-		<input type="text" name="text" placeholder="Announcement" value="{{ announcement or '' }}" />
-		<button type="submit">Update</button>
-	</form>
-</section>
+<div class="grid md:grid-cols-3 gap-4 mb-4">
+	<div class="stat bg-base-200 rounded-box">
+		<div class="stat-title">Active Orders</div>
+		<div class="stat-value">{{ active_orders }}</div>
+	</div>
+	<div class="stat bg-base-200 rounded-box">
+		<div class="stat-title">Revenue Today</div>
+		<div class="stat-value">₹{{ '%.2f'|format(revenue_today or 0) }}</div>
+	</div>
+	<div class="stat bg-base-200 rounded-box">
+		<div class="stat-title">Peak Hour (recent)</div>
+		<div class="stat-value">{{ peak_hour if peak_hour is not none else '—' }}</div>
+	</div>
+</div>
 
-<section>
-	<h3>Low Stock</h3>
-	<ul>
-		{% for it in low_stock_items %}
-		<li>{{ it.name }} — {{ it.stock_qty }}</li>
-		{% else %}
-		<li>None</li>
-		{% endfor %}
-	</ul>
-</section>
+<div class="card bg-base-200 shadow mb-4">
+	<div class="card-body">
+		<h3 class="card-title">Controls</h3>
+		<div class="flex flex-col sm:flex-row gap-2">
+			<form method="post" action="{{ url_for('owners.set_open_state') }}">
+				<input type="hidden" name="state" value="{{ 'close' if canteen_open else 'open' }}" />
+				<button type="submit" class="btn">{{ 'Close' if canteen_open else 'Open' }} Canteen</button>
+			</form>
+			<form method="post" action="{{ url_for('owners.set_announcement') }}" class="flex-1 flex gap-2">
+				<input type="text" name="text" placeholder="Announcement" value="{{ announcement or '' }}" class="input input-bordered w-full" />
+				<button type="submit" class="btn">Update</button>
+			</form>
+		</div>
+	</div>
+</div>
 
-<section>
-	<h3>Recent Orders</h3>
-	<ul>
-		{% for o in recent_orders %}
-		<li>#{{ o.order_id }} — {{ o.status }} — {{ o.created_at }}</li>
-		{% else %}
-		<li>No recent orders</li>
-		{% endfor %}
-	</ul>
-</section>
+<div class="grid md:grid-cols-2 gap-4">
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Low Stock</h3>
+			<ul class="space-y-1">
+				{% for it in low_stock_items %}
+				<li class="text-sm">{{ it.name }} — {{ it.stock_qty }}</li>
+				{% else %}
+				<li class="opacity-70">None</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
 
-<section>
-	<h3>Summary (last days)</h3>
-	<ul>
-		{% for s in summaries %}
-		<li>{{ s.date }} - Orders: {{ s.total_orders }} - Revenue: {{ '%.2f'|format(s.total_revenue) }}</li>
-		{% else %}
-		<li>No summaries available.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Recent Orders</h3>
+			<ul class="space-y-1">
+				{% for o in recent_orders %}
+				<li class="text-sm">#{{ o.order_id }} — {{ o.status }} — {{ o.created_at }}</li>
+				{% else %}
+				<li class="opacity-70">No recent orders</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
 
-<section>
-	<h3>Top Items</h3>
-	<ul>
-		{% for it in top_items %}
-		<li>{{ it.menu_item.name if it.menu_item else 'Unknown' }} - Sold: {{ it.total_sold }} - Revenue: {{ '%.2f'|format(it.total_revenue) }}</li>
-		{% else %}
-		<li>No item data.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Summary (last days)</h3>
+			<ul class="space-y-1">
+				{% for s in summaries %}
+				<li class="text-sm">{{ s.date }} - Orders: {{ s.total_orders }} - Revenue: ₹{{ '%.2f'|format(s.total_revenue) }}</li>
+				{% else %}
+				<li class="opacity-70">No summaries available.</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
 
-<section>
-	<h3>Recent Feedback</h3>
-	<ul>
-		{% for f in recent_feedback %}
-		<li>{{ f.created_at }} - {{ f.user.name if f.user else 'Anon' }} - Rating: {{ f.rating }} - {{ f.comments }}</li>
-		{% else %}
-		<li>No feedback yet.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Top Items</h3>
+			<ul class="space-y-1">
+				{% for it in top_items %}
+				<li class="text-sm">{{ it.menu_item.name if it.menu_item else 'Unknown' }} - Sold: {{ it.total_sold }} - Revenue: ₹{{ '%.2f'|format(it.total_revenue) }}</li>
+				{% else %}
+				<li class="opacity-70">No item data.</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
 
-<section>
-	<h3>Recent Activity</h3>
-	<ul>
-		{% for a in recent_status %}
-		<li>{{ a.created_at }} - User: {{ a.user.name if a.user else a.user_id }} - Action: {{ a.action }}</li>
-		{% else %}
-		<li>No recent activity.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Recent Feedback</h3>
+			<ul class="space-y-1">
+				{% for f in recent_feedback %}
+				<li class="text-sm">{{ f.created_at }} - {{ f.user.name if f.user else 'Anon' }} - Rating: {{ f.rating }} - {{ f.comments }}</li>
+				{% else %}
+				<li class="opacity-70">No feedback yet.</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
 
-<section>
-	<h3>Totals</h3>
-	<p>Total Orders: {{ total_orders }}</p>
-	<p>Total Revenue (shown days): {{ '%.2f'|format(total_revenue) }}</p>
-</section>
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h3 class="card-title">Recent Activity</h3>
+			<ul class="space-y-1">
+				{% for a in recent_status %}
+				<li class="text-sm">{{ a.created_at }} - User: {{ a.user.name if a.user else a.user_id }} - Action: {{ a.action }}</li>
+				{% else %}
+				<li class="opacity-70">No recent activity.</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+</div>
 
 {% endblock %}

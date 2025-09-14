@@ -1,5 +1,5 @@
 {% extends 'base.html' %} {% block title %}Token Scanner - CanteenKart{% endblock %} {% block content %}
-<h1>Token / QR Scanner</h1>
+<h1 class="text-2xl font-semibold mb-4">Token / QR Scanner</h1>
 
 <noscript>
 	<p>Your browser has JavaScript disabled. Please enter token manually.</p>
@@ -10,23 +10,25 @@
 	</style>
 </noscript>
 
-<div id="qr-enhanced" style="margin-bottom: 12px">
-	<video id="preview" playsinline style="width: 320px; height: auto; background: #000; display: none"></video>
-	<canvas id="qr-canvas" style="display: none"></canvas>
-	<div style="margin-top: 8px">
-		<button id="startBtn" type="button">Start Camera</button>
-		<button id="stopBtn" type="button" disabled>Stop</button>
-		<span id="scanStatus" style="margin-left: 8px; font-size: 0.9em; color: #555"></span>
+<div id="qr-enhanced" class="mb-3">
+	<video id="preview" playsinline class="w-80 max-w-full bg-black rounded hidden"></video>
+	<canvas id="qr-canvas" class="hidden"></canvas>
+	<div class="mt-2 flex items-center gap-2">
+		<button id="startBtn" type="button" class="btn btn-sm">Start Camera</button>
+		<button id="stopBtn" type="button" class="btn btn-sm" disabled>Stop</button>
+		<span id="scanStatus" class="text-sm opacity-70 ml-2"></span>
 	</div>
-	<div id="qrError" style="color: #c00; font-size: 0.9em; margin-top: 6px"></div>
+	<div id="qrError" class="text-error text-sm mt-1"></div>
 </div>
 
-<form id="tokenForm" method="post">
-	<input id="tokenInput" type="text" name="token" placeholder="Enter token code" />
-	<button type="submit">Mark Collected</button>
-	<div style="font-size: 0.9em; color: #666; margin-top: 4px">Tip: Use the camera to auto-fill the token.</div>
-	<div style="margin-top: 8px">
-		<a href="{{ url_for('owner_orders.list_orders') }}">Back to Orders</a>
+<form id="tokenForm" method="post" class="space-y-2">
+	<input id="tokenInput" type="text" name="token" placeholder="Enter token code" class="input input-bordered w-80 max-w-full" />
+	<div>
+		<button type="submit" class="btn btn-primary btn-sm">Mark Collected</button>
+	</div>
+	<div class="text-sm opacity-70">Tip: Use the camera to auto-fill the token.</div>
+	<div class="mt-1">
+		<a class="link" href="{{ url_for('owner_orders.list_orders') }}">Back to Orders</a>
 	</div>
 </form>
 
