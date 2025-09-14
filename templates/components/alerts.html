@@ -1,0 +1,9 @@
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+<div class="space-y-2 my-3">
+	{% for category, msg in messages %} {% set cat = category or 'info' %}
+	<div class="alert {{ 'alert-success' if cat in ['success'] else ('alert-error' if cat in ['danger','error'] else ('alert-warning' if cat in ['warning'] else 'alert-info')) }}">
+		<span>{{ msg }}</span>
+	</div>
+	{% endfor %}
+</div>
+{% endif %} {% endwith %}

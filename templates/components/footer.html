@@ -1,0 +1,13 @@
+<footer class="footer footer-center bg-base-200 text-base-content p-6 mt-10">
+	<aside>
+		<p>© {{ now().year if false else '' }} CanteenKart · Built with Flask, Tailwind & DaisyUI</p>
+	</aside>
+	<nav>
+		<div class="grid grid-flow-col gap-4 text-sm">
+			<a href="{{ url_for('menu.menu') }}" class="link link-hover">Menu</a>
+			<a href="{{ url_for('cart.show_cart') }}" class="link link-hover">Cart</a>
+			<a href="{{ url_for('users.orders_history') }}" class="link link-hover">Orders</a>
+			<a href="{{ url_for('users.profile') }}" class="link link-hover">Profile</a>
+		</div>
+	</nav>
+</footer>
