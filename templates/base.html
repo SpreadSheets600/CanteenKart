@@ -1,31 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{% block title %}CanteenKart{% endblock %}</title>
-		<link rel="stylesheet" href="/static/css/output.css" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}" />
 	</head>
-	<body>
-		<nav>
-			<a href="{{ url_for('home') }}">Home</a>
-			{% if session.get('user_id') %}
-			<span>Hi, {{ session.get('user_name', 'User') }}</span>
-			<a href="{{ url_for('auth.logout') }}">Logout</a>
-			{% else %}
-			<a href="{{ url_for('auth.login') }}">Login</a>
-			<a href="{{ url_for('auth.register') }}">Sign Up</a>
-			{% endif %}
-		</nav>
+	<body class="min-h-screen bg-base-100 text-base-content">
+		{% include 'components/navbar.html' %}
 
-		{% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
-		<ul class="flashes">
-			{% for category, msg in messages %}
-			<li class="{{ category }}">{{ msg }}</li>
-			{% endfor %}
-		</ul>
-		{% endif %} {% endwith %}
+		<div class="container mx-auto px-4">
+			{% include 'components/alerts.html' %}
+			<main class="py-6">{% block content %}{% endblock %}</main>
+		</div>
 
-		<main>{% block content %}{% endblock %}</main>
+		{% include 'components/footer.html' %}
+		<script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 	</body>
 </html>
