@@ -1,27 +1,16 @@
 {% extends 'base.html' %} {% block title %}Sign Up - CanteenKart{% endblock %} {% block content %}
-<h2>Sign Up</h2>
-<form method="post" action="{{ url_for('auth.register') }}">
-	<label
-		>Phone (10 digits)<br />
-		<input type="text" name="phone" maxlength="10" required />
-	</label>
-	<br />
-	<label
-		>Name<br />
-		<input type="text" name="name" required />
-	</label>
-	<br />
-	<label
-		>Password<br />
-		<input type="password" name="password" required />
-	</label>
-	<br />
-	<label
-		>Confirm Password<br />
-		<input type="password" name="password2" required />
-	</label>
-	<br />
-	<button type="submit">Sign Up</button>
-</form>
-<p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+<div class="max-w-md mx-auto">
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<h2 class="card-title">Create your account</h2>
+			<form method="post" action="{{ url_for('auth.register') }}" class="space-y-3">
+				{% from 'components/forms.html' import text %} {{ text('phone', 'Phone (10 digits)', '', 'tel', '9876543210', true, {'maxlength':10}) }} {{ text('name', 'Name', '', 'text', 'Your Name', true) }} {{ text('password', 'Password', '', 'password', '••••••••', true) }} {{ text('password2', 'Confirm Password', '', 'password', '••••••••', true) }}
+				<div class="card-actions justify-end">
+					<button type="submit" class="btn btn-primary">Sign Up</button>
+				</div>
+			</form>
+			<p class="text-sm opacity-75">Already have an account? <a class="link" href="{{ url_for('auth.login') }}">Login</a></p>
+		</div>
+	</div>
+</div>
 {% endblock %}
