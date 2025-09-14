@@ -1,33 +1,39 @@
 {% extends 'base.html' %} {% block title %}My Orders - CanteenKart{% endblock %} {% block content %}
-<h1>My Orders</h1>
+<h1 class="text-2xl font-semibold mb-4">My Orders</h1>
 {% if orders %}
-<table>
-	<thead>
-		<tr>
-			<th>ID</th>
-			<th>Token</th>
-			<th>Status</th>
-			<th>Date</th>
-			<th>Actions</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for o in orders %}
-		<tr>
-			<td>#{{ o.order_id }}</td>
-			<td>{{ o.token_code }}</td>
-			<td>{{ o.status }}</td>
-			<td>{{ o.created_at }}</td>
-			<td>
-				<form method="post" action="{{ url_for('users.reorder', order_id=o.order_id) }}">
-					<button type="submit">Reorder</button>
-				</form>
-				<a href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
-			</td>
-		</tr>
-		{% endfor %}
-	</tbody>
-</table>
+<div class="card bg-base-200 shadow">
+	<div class="card-body">
+		<div class="overflow-x-auto">
+			<table class="table table-zebra">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Token</th>
+						<th>Status</th>
+						<th>Date</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for o in orders %}
+					<tr>
+						<td>#{{ o.order_id }}</td>
+						<td>{{ o.token_code }}</td>
+						<td><span class="badge {{ 'badge-warning' if o.status in ['pending','preparing'] else ('badge-success' if o.status in ['ready','completed'] else '') }}">{{ o.status }}</span></td>
+						<td>{{ o.created_at }}</td>
+						<td class="flex items-center gap-2">
+							<form method="post" action="{{ url_for('users.reorder', order_id=o.order_id) }}">
+								<button class="btn btn-sm" type="submit">Reorder</button>
+							</form>
+							<a class="btn btn-ghost btn-sm" href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
 {% else %}
-<p>No orders yet.</p>
+<div class="alert">No orders yet.</div>
 {% endif %} {% endblock %}

@@ -1,18 +1,40 @@
 {% extends 'base.html' %} {% block title %}Cart - CanteenKart{% endblock %} {% block content %}
-<h1>Your Cart</h1>
+<h1 class="text-2xl font-semibold mb-4">Your Cart</h1>
 {% if items %}
-<ul>
-	{% for row in items %}
-	<li>
-		{{ row.item.name }} x {{ row.qty }} = ₹{{ '%.2f'|format(row.subtotal) }}
-		<form action="{{ url_for('cart.remove_from_cart', item_id=row.item.item_id) }}" method="post" style="display: inline">
-			<button type="submit">Remove</button>
-		</form>
-	</li>
-	{% endfor %}
-</ul>
-<p>Total: ₹{{ '%.2f'|format(total) }}</p>
-<p><a href="{{ url_for('cart.checkout') }}">Proceed to Checkout</a></p>
+<div class="card bg-base-200 shadow">
+	<div class="card-body">
+		<div class="overflow-x-auto">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Item</th>
+						<th class="w-24">Qty</th>
+						<th class="w-32">Subtotal</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in items %}
+					<tr>
+						<td>{{ row.item.name }}</td>
+						<td>{{ row.qty }}</td>
+						<td>₹{{ '%.2f'|format(row.subtotal) }}</td>
+						<td class="text-right">
+							<form action="{{ url_for('cart.remove_from_cart', item_id=row.item.item_id) }}" method="post">
+								<button class="btn btn-ghost btn-sm" type="submit">Remove</button>
+							</form>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div class="flex items-center justify-between mt-4">
+			<div class="text-lg">Total: <span class="font-semibold">₹{{ '%.2f'|format(total) }}</span></div>
+			<a href="{{ url_for('cart.checkout') }}" class="btn btn-primary">Proceed to Checkout</a>
+		</div>
+	</div>
+</div>
 {% else %}
-<p>Your cart is empty.</p>
+<div class="alert">Your cart is empty.</div>
 {% endif %} {% endblock %}

@@ -1,23 +1,31 @@
 {% extends 'base.html' %} {% block title %}Checkout - CanteenKart{% endblock %} {% block content %}
-<h1>Checkout</h1>
-<form method="post">
-	<h3>Items</h3>
-	<ul>
-		{% for row in items %}
-		<li>{{ row.item.name }} x {{ row.qty }} = ₹{{ '%.2f'|format(row.subtotal) }}</li>
-		{% endfor %}
-	</ul>
-	<p>Total: ₹{{ '%.2f'|format(total) }}</p>
-
-	<label
-		>Pickup Slot:
-		<select name="pickup_slot">
-			<option value="slot1">In 10 minutes</option>
-			<option value="slot2">In 20 minutes</option>
-			<option value="slot3">In 30 minutes</option>
-		</select>
-	</label>
-
-	<button type="submit">Place Order</button>
+<h1 class="text-2xl font-semibold mb-4">Checkout</h1>
+<form method="post" class="grid md:grid-cols-3 gap-4">
+	<div class="md:col-span-2">
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<h3 class="card-title">Items</h3>
+				<ul class="space-y-2">
+					{% for row in items %}
+					<li class="flex items-center justify-between">
+						<span>{{ row.item.name }} x {{ row.qty }}</span>
+						<span>₹{{ '%.2f'|format(row.subtotal) }}</span>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div>
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<div class="text-lg">Total: <span class="font-semibold">₹{{ '%.2f'|format(total) }}</span></div>
+				{% from 'components/forms.html' import select %} {{ select('pickup_slot', 'Pickup Slot', [('slot1','In 10 minutes'),('slot2','In 20 minutes'),('slot3','In 30 minutes')], 'slot1', true) }}
+				<div class="card-actions justify-end">
+					<button type="submit" class="btn btn-primary">Place Order</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </form>
 {% endblock %}

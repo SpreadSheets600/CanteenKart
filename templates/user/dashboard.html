@@ -1,54 +1,82 @@
-{% extends 'base.html' %} {% block content %}
-<h2>User Dashboard</h2>
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-semibold mb-4">User Dashboard</h2>
 
-<section>
-	<h3>Wallet</h3>
-	{% if wallet %}
-	<p>Balance: {{ '%.2f'|format(wallet.balance) }}</p>
-	{% else %}
-	<p>No wallet found.</p>
-	{% endif %}
-</section>
+<div class="grid md:grid-cols-3 gap-4">
+	<div class="md:col-span-2">
+		<div class="grid sm:grid-cols-3 gap-4 mb-4">
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Total Orders</div>
+				<div class="stat-value">{{ total_orders }}</div>
+			</div>
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Total Spent</div>
+				<div class="stat-value">₹{{ '%.2f'|format(total_spent) }}</div>
+			</div>
+			<div class="stat bg-base-200 rounded-box">
+				<div class="stat-title">Average Order</div>
+				<div class="stat-value">₹{{ '%.2f'|format(avg_order) }}</div>
+			</div>
+		</div>
 
-<section>
-	<h3>Your Stats</h3>
-	<p>Total Orders: {{ total_orders }}</p>
-	<p>Total Spent: {{ '%.2f'|format(total_spent) }}</p>
-	<p>Average Order: {{ '%.2f'|format(avg_order) }}</p>
-	<p>Last Order: {{ last_order.created_at if last_order else '-' }}</p>
-</section>
+		<div class="card bg-base-200 shadow mb-4">
+			<div class="card-body">
+				<h3 class="card-title">Recent Orders</h3>
+				<ul class="space-y-2">
+					{% for o in orders %}
+					<li class="flex items-center justify-between">
+						<span>Order #{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</span>
+						<a class="btn btn-ghost btn-sm" href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
+					</li>
+					{% else %}
+					<li class="opacity-70">No recent orders.</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
 
-{% if last_order %}
-<section>
-	<h3>Last Order Details (Order #{{ last_order.order_id }})</h3>
-	<ul>
-		{% for oi in last_order_items %}
-		<li>{{ oi.menu_item.name if oi.menu_item else oi.item_id }} x {{ oi.quantity }} — {{ '%.2f'|format((oi.price or 0.0) * (oi.quantity or 0)) }}</li>
-		{% endfor %}
-	</ul>
-</section>
-{% endif %}
+		{% if last_order %}
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<h3 class="card-title">Last Order Details (#{{ last_order.order_id }})</h3>
+				<ul class="space-y-1">
+					{% for oi in last_order_items %}
+					<li>{{ oi.menu_item.name if oi.menu_item else oi.item_id }} x {{ oi.quantity }} — ₹{{ '%.2f'|format((oi.price or 0.0) * (oi.quantity or 0)) }}</li>
+					{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+	</div>
 
-<section>
-	<h3>Recent Orders</h3>
-	<ul>
-		{% for o in orders %}
-		<li>Order #{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</li>
-		{% else %}
-		<li>No recent orders.</li>
-		{% endfor %}
-	</ul>
-</section>
+	<div>
+		<div class="card bg-base-200 shadow">
+			<div class="card-body">
+				<h3 class="card-title">Wallet</h3>
+				{% if wallet %}
+				<div class="stats shadow">
+					<div class="stat">
+						<div class="stat-title">Balance</div>
+						<div class="stat-value text-primary">₹{{ '%.2f'|format(wallet.balance) }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="alert">No wallet found.</div>
+				{% endif %}
+			</div>
+		</div>
 
-<section>
-	<h3>Recent Activity</h3>
-	<ul>
-		{% for a in activities %}
-		<li>{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
-		{% else %}
-		<li>No recent activity.</li>
-		{% endfor %}
-	</ul>
-</section>
-
+		<div class="card bg-base-200 shadow mt-4">
+			<div class="card-body">
+				<h3 class="card-title">Recent Activity</h3>
+				<ul class="space-y-1">
+					{% for a in activities %}
+					<li class="text-sm">{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
+					{% else %}
+					<li class="opacity-70">No recent activity.</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}

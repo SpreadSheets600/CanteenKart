@@ -1,19 +1,32 @@
 {% extends 'base.html' %} {% block title %}Menu - CanteenKart{% endblock %} {% block content %}
-<h1>Menu</h1>
-<div class="card-grid">
+<div class="flex items-center justify-between mb-4">
+	<h1 class="text-2xl font-semibold">Menu</h1>
+	<a href="{{ url_for('cart.show_cart') }}" class="btn btn-sm">View Cart</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 	{% for item in items %}
-	<div class="card">
-		<h3>{{ item.name }}</h3>
-		<p>{{ item.description or '' }}</p>
-		<p>Price: ₹{{ '%.2f'|format(item.price) }}</p>
-		<p>Stock: {{ item.stock_qty }}</p>
-		{% if item.is_available %}
-		<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post">
-			<button type="submit">Add to Cart</button>
-		</form>
-		{% else %}
-		<button disabled>Unavailable</button>
-		{% endif %}
+	<div class="card bg-base-200 shadow h-full">
+		<div class="card-body">
+			<div class="flex items-start justify-between gap-3">
+				<h3 class="card-title text-lg">{{ item.name }}</h3>
+				<div class="badge badge-ghost">₹{{ '%.2f'|format(item.price) }}</div>
+			</div>
+			{% if item.description %}
+			<p class="text-sm opacity-80">{{ item.description }}</p>
+			{% endif %}
+			<div class="flex items-center justify-between mt-auto">
+				<div class="text-xs opacity-70">Stock: {{ item.stock_qty }}</div>
+				<div class="card-actions">
+					{% if item.is_available and item.stock_qty > 0 %}
+					<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post">
+						<button type="submit" class="btn btn-primary btn-sm">Add</button>
+					</form>
+					{% else %}
+					<button class="btn btn-disabled btn-sm" disabled>Unavailable</button>
+					{% endif %}
+				</div>
+			</div>
+		</div>
 	</div>
 	{% endfor %}
 </div>
