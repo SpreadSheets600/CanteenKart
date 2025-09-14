@@ -1,16 +1,21 @@
 from flask import (
-    Blueprint,
     render_template,
-    request,
+    current_app,
+    Blueprint,
+    send_file,
+    Response,
     redirect,
+    request,
+    session,
     url_for,
     flash,
-    session,
-    current_app,
 )
 import secrets
+import qrcode
+import io
 
 from models.models import MenuItem, Order, OrderItem
+from ..app.extensions import logger
 from models.database import db
 
 
@@ -53,6 +58,8 @@ def add_to_cart(item_id: int):
 
     if not item.is_available or item.stock_qty <= 0:
         flash("Item Not Available", "warning")
+        logger.warning(f"Attempted to Add Unavailable Item to Cart : {item_id}")
+
         return redirect(url_for("menu.menu"))
 
     cart = get_cart()
@@ -63,6 +70,8 @@ def add_to_cart(item_id: int):
     session["cart"] = cart
 
     flash("Added To Cart!", "success")
+    logger.info(f"Item Added to Cart : {item_id}")
+
     return redirect(url_for("menu.menu"))
 
 
@@ -75,7 +84,9 @@ def remove_from_cart(item_id: int):
         del cart[key]
 
         session["cart"] = cart
+
         flash("Removed From Cart!", "info")
+        logger.info(f"Item Removed from Cart : {item_id}")
 
     return redirect(url_for("cart.show_cart"))
 
@@ -111,12 +122,16 @@ def checkout():
 
     if not cart:
         flash("Cart Is Empty", "warning")
+        logger.warning("Checkout Attempt With Empty Cart")
+
         return redirect(url_for("menu.menu"))
 
     user_id = session.get("user_id")
 
     if not user_id:
         flash("Please Login To Place Order", "warning")
+        logger.warning("Checkout Attempt Without Login")
+
         return redirect(url_for("auth.login"))
 
     token_code = secrets.token_hex(3)
@@ -156,7 +171,9 @@ def checkout():
     except Exception:
         pass
 
-    flash("Order placed. Token: %s" % token_code, "success")
+    flash("Order Placed. Token : %s" % token_code, "success")
+    logger.info(f"New Order Placed : {order.order_id} By User {user_id}")
+
     return redirect(url_for("cart.order_status", order_id=order.order_id))
 
 
@@ -168,34 +185,34 @@ def order_status(order_id: int):
 
 @cart_bp.route("/order_status/<int:order_id>/qr.png")
 def order_status_qr(order_id: int):
-    """Return a QR code PNG for this order's token and status URL."""
     order = Order.query.get_or_404(order_id)
-    try:
-        import qrcode
-        import io
-        from flask import send_file, request
 
-        # Encode both token and a deep link to the status page
+    try:
         base_url = request.url_root.rstrip("/")
-        status_url = f"{base_url}{url_for('cart.order_status', order_id=order.order_id)}"
+        status_url = (
+            f"{base_url}{url_for('cart.order_status', order_id=order.order_id)}"
+        )
         payload = {
             "order_id": order.order_id,
             "token": order.token_code,
             "url": status_url,
         }
 
-        # Keep QR simple and compatible
         qr = qrcode.QRCode(version=None, box_size=6, border=2)
         import json as _json
+
         qr.add_data(_json.dumps(payload, separators=(",", ":")))
         qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
 
+        img = qr.make_image(fill_color="black", back_color="white")
         buf = io.BytesIO()
+
         img.save(buf, format="PNG")
         buf.seek(0)
-        return send_file(buf, mimetype="image/png", download_name=f"order_{order.order_id}_qr.png")
+
+        return send_file(
+            buf, mimetype="image/png", download_name=f"order_{order.order_id}_qr.png"
+        )
+
     except Exception:
-        # Fallback: plain text if QR generation fails
-        from flask import Response
-        return Response("QR unavailable", status=503, mimetype="text/plain")
+        return Response("QR Unavailable", status=503, mimetype="text/plain")

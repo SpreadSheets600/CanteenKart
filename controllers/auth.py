@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask import session
 
 from models.database import db
+from ..app.extensions import logger
 from models.models import User, Wallet
 
 auth = Blueprint(
@@ -22,6 +23,8 @@ def login():
 
         if not phone or not password:
             flash("Phone And Password Are Required!", "warning")
+            logger.warning("Login Attempt Missing Phone or Password")
+
             return render_template("auth/login.html")
 
         user = User.query.filter_by(phone=phone).first()
@@ -37,11 +40,13 @@ def login():
             session["role"] = user.role
 
             flash("Logged In Successfully!", "success")
+            logger.info(f"User Logged In : {user.phone} ( {user.role} )")
 
             next_page = request.args.get("next")
             return redirect(next_page or url_for("home"))
 
         flash("Invalid Phone Or Password!", "danger")
+        logger.warning(f"Invalid Login Attempt For Phone : {phone}")
 
     return render_template("auth/login.html")
 
@@ -59,6 +64,8 @@ def logout():
     session.pop("role", None)
 
     flash("Logged Out!", "info")
+    logger.info("User Logged Out")
+
     return redirect(url_for("auth.login"))
 
 
@@ -74,10 +81,16 @@ def register():
 
         if not phone or not password:
             flash("Phone And Password Are Required!", "warning")
+            logger.warning("Registration Attempt Missing Phone or Password")
+
             return render_template("auth/signup.html")
 
         if User.query.filter_by(phone=phone).first():
             flash("Phone Already Registered!", "warning")
+            logger.warning(
+                f"Registration Attempt For Already Registered Phone : {phone}"
+            )
+
             return render_template("auth/signup.html")
 
         user = User(
@@ -89,11 +102,15 @@ def register():
         db.session.add(user)
         db.session.commit()
 
+        logger.info(f"New User Registered : {user.phone} ( {user.role} )")
+
         wallet = Wallet(user=user, balance=0.0)
         db.session.add(wallet)
         db.session.commit()
 
         flash("Registration Successfully Please Log In!", "success")
+        logger.info(f"Wallet Created For User : {user.phone} ( {user.role} )")
+
         return redirect(url_for("auth.login"))
 
     return render_template("auth/signup.html")

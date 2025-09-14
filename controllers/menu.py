@@ -1,12 +1,13 @@
 from flask import (
-    Blueprint,
     render_template,
-    request,
+    Blueprint,
     redirect,
     url_for,
+    request,
     flash,
 )
 
+from ..app.extensions import logger
 from models.models import MenuItem
 from models.database import db
 from .utils import owner_only
@@ -33,18 +34,23 @@ def owner_menu():
 def add_item():
     name = (request.form.get("name") or "").strip()
     description = request.form.get("description") or ""
+
     try:
         price = float(request.form.get("price") or 0)
     except Exception:
         price = 0.0
+
     try:
         stock_qty = int(request.form.get("stock_qty") or 0)
     except Exception:
         stock_qty = 0
+
     is_available = bool(request.form.get("is_available"))
 
     if not name:
-        flash("Name is required", "danger")
+        flash("Name Is Required", "danger")
+        logger.warning("Attempted To Add Menu Item Without A Name")
+
         return redirect(url_for("menu.owner_menu"))
 
     item = MenuItem(
@@ -57,7 +63,9 @@ def add_item():
     db.session.add(item)
     db.session.commit()
 
-    flash("Item added", "success")
+    flash("Item Added", "success")
+    logger.info(f"Menu Item Added : {name} At {price}")
+
     return redirect(url_for("menu.owner_menu"))
 
 
@@ -67,21 +75,27 @@ def edit_item(item_id: int):
     item = MenuItem.query.get_or_404(item_id)
 
     item.name = (request.form.get("name") or item.name).strip()
+
     try:
         item.price = float(request.form.get("price") or item.price)
     except Exception:
         pass
+
     item.description = request.form.get("description") or item.description
+
     try:
         item.stock_qty = int(request.form.get("stock_qty") or item.stock_qty)
     except Exception:
         pass
+
     item.is_available = bool(request.form.get("is_available"))
 
     db.session.add(item)
     db.session.commit()
 
-    flash("Item updated", "success")
+    flash("Item Updated", "success")
+    logger.info(f"Menu Item Updated : {item.name} At {item.price}")
+
     return redirect(url_for("menu.owner_menu"))
 
 
@@ -92,5 +106,7 @@ def delete_item(item_id: int):
     db.session.delete(item)
     db.session.commit()
 
-    flash("Item deleted", "info")
+    flash("Item Deleted", "info")
+    logger.info(f"Menu Item Deleted : {item.name} At {item.price}")
+
     return redirect(url_for("menu.owner_menu"))

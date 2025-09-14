@@ -3,7 +3,7 @@ from flask import Flask
 from pathlib import Path
 
 from .config import Config
-from .extensions import db, login_manager
+from .extensions import db, login_manager, logger
 
 
 def create_app(config_object: str | object = Config):
@@ -33,6 +33,7 @@ def create_app(config_object: str | object = Config):
         Path(os.path.dirname(abs_db_path)).mkdir(parents=True, exist_ok=True)
 
         try:
+            logger.info("Creating DB File If Not Exists .... ")
             Path(abs_db_path).touch(exist_ok=True)
         except Exception:
             pass
@@ -60,15 +61,18 @@ def create_app(config_object: str | object = Config):
                 role = _session.get("role")
 
                 if role == "owner":
+                    logger.info(f"Owner With ID {user_id} Connected To SocketIO")
                     join_room("owners")
 
                 if user_id:
+                    logger.info(f"User With ID {user_id} Connected To SocketIO")
                     join_room(f"user_{user_id}")
 
             except Exception:
                 pass
 
     except Exception:
+        logger.warning("SocketIO Not Enabled")
         app.config["ENABLE_SOCKETIO"] = False
 
     from .models.user import User
@@ -84,21 +88,21 @@ def create_app(config_object: str | object = Config):
 
     @app.route("/")
     def home():
-        return render_template("user/home.html")
+        return render_template("home.html")
 
     from controllers.auth import auth as auth_bp
     from controllers.orders import orders_bp
-    from controllers.menu import menu_bp
-    from controllers.cart import cart_bp
     from controllers.owners import owners_bp
     from controllers.users import users_bp
+    from controllers.menu import menu_bp
+    from controllers.cart import cart_bp
 
     app.register_blueprint(orders_bp)
+    app.register_blueprint(owners_bp)
+    app.register_blueprint(users_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(menu_bp)
     app.register_blueprint(cart_bp)
-    app.register_blueprint(owners_bp)
-    app.register_blueprint(users_bp)
 
     @app.context_processor
     def inject_user():
@@ -126,14 +130,15 @@ def create_app(config_object: str | object = Config):
         try:
             from werkzeug.security import generate_password_hash
 
-            from .models.user import User
             from .models.wallet import Wallet
+            from .models.user import User
 
-            admin_phone = app.config.get("ADMIN_PHONE")
             admin_password = app.config.get("ADMIN_PASSWORD")
+            admin_phone = app.config.get("ADMIN_PHONE")
 
             if admin_phone and admin_password:
                 admin = User.query.filter_by(phone=admin_phone).first()
+
                 if not admin:
                     pw_hash = generate_password_hash(admin_password)
                     admin = User(
@@ -144,6 +149,11 @@ def create_app(config_object: str | object = Config):
                     )
                     db.session.add(admin)
                     db.session.commit()
+
+                    logger.info(
+                        f"Created Admin Creds : {admin_phone} : {admin_password}"
+                    )
+
                 else:
                     if admin.role != "owner":
                         admin.role = "owner"
@@ -151,6 +161,7 @@ def create_app(config_object: str | object = Config):
                         db.session.commit()
 
                 w = Wallet.query.filter_by(user_id=admin.user_id).first()
+
                 if not w:
                     w = Wallet(user_id=admin.user_id, balance=0.0)
                     db.session.add(w)

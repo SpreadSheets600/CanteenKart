@@ -1,13 +1,14 @@
 from flask import (
-    Blueprint,
     render_template,
-    request,
+    current_app,
+    Blueprint,
     redirect,
+    request,
     url_for,
     flash,
-    current_app,
 )
 
+from ..app.extensions import logger
 from models.models import Order
 from models.database import db
 from .utils import owner_only
@@ -21,12 +22,16 @@ orders_bp = Blueprint(
 @owner_only
 def list_orders():
     from flask import request
+
     q = Order.query
     status = (request.args.get("status") or "").strip()
+
     if status in {"pending", "preparing", "ready"}:
         q = q.filter_by(status=status)
+
     else:
         q = q.filter(Order.status.in_(["pending", "preparing", "ready"]))
+
     orders = q.order_by(Order.created_at.desc()).all()
     return render_template("owner/owner_orders.html", orders=orders)
 
@@ -38,7 +43,11 @@ def update_status(order_id: int):
     status = (request.form.get("status") or order.status).strip()
 
     if status not in {"pending", "preparing", "ready", "completed", "cancelled"}:
-        flash("Invalid status", "warning")
+        flash("Invalid Status", "warning")
+        logger.warning(
+            f"Attempted To Update Order {order_id} With Invalid Status {status}"
+        )
+
         return redirect(url_for("owner_orders.list_orders"))
 
     order.status = status
@@ -52,7 +61,10 @@ def update_status(order_id: int):
                 "order_update", {"order_id": order.order_id, "status": order.status}
             )
     except Exception:
+        logger.exception("Failed To Emit Order Update Via SocketIO")
         pass
 
     flash("Order Status Updated", "success")
+    logger.info(f"Order {order_id} Status Updated To {status}")
+
     return redirect(url_for("owner_orders.list_orders"))
