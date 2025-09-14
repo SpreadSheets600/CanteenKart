@@ -1,5 +1,5 @@
-from datetime import datetime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from ..extensions import db
 
