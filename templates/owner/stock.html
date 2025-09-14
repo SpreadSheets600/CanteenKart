@@ -1,0 +1,31 @@
+{% extends 'base.html' %} {% block title %}Stock - CanteenKart{% endblock %} {% block content %}
+<h1>Stock & Inventory</h1>
+<form method="post" action="{{ url_for('owners.stock_auto_disable') }}">
+	<button type="submit">Auto-disable Out-of-Stock</button>
+</form>
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Qty</th>
+			<th>Avail</th>
+			<th>Update</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for it in items %}
+		<tr>
+			<td>{{ it.name }}</td>
+			<td>{{ it.stock_qty }}</td>
+			<td>{{ 'Yes' if it.is_available else 'No' }}</td>
+			<td>
+				<form method="post" action="{{ url_for('owners.stock_update', item_id=it.item_id) }}">
+					<input type="number" name="stock_qty" value="{{ it.stock_qty }}" min="0" />
+					<button type="submit">Save</button>
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %} {% block title %}Profile - CanteenKart{% endblock %} {% block content %}
+<h1>My Profile</h1>
+<form method="post">
+	<label>Name</label>
+	<input type="text" name="name" value="{{ user.name }}" />
+	<button type="submit">Save</button>
+</form>
+
+<h2>Wallet</h2>
+{% if wallet %}
+<p>Balance: ₹{{ '%.2f'|format(wallet.balance or 0) }}</p>
+{% else %}
+<p>No wallet linked.</p>
+{% endif %} {% endblock %}

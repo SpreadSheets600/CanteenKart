@@ -2,6 +2,45 @@
 <h2>Owner Dashboard</h2>
 
 <section>
+	<h3>KPIs</h3>
+	<ul>
+		<li>Active Orders: {{ active_orders }}</li>
+		<li>Revenue Today: {{ '%.2f'|format(revenue_today or 0) }}</li>
+		<li>Peak Hour (recent): {{ peak_hour if peak_hour is not none else '—' }}</li>
+	</ul>
+	<form method="post" action="{{ url_for('owners.set_open_state') }}">
+		<input type="hidden" name="state" value="{{ 'close' if canteen_open else 'open' }}" />
+		<button type="submit">{{ 'Close' if canteen_open else 'Open' }} Canteen</button>
+	</form>
+	<form method="post" action="{{ url_for('owners.set_announcement') }}">
+		<input type="text" name="text" placeholder="Announcement" value="{{ announcement or '' }}" />
+		<button type="submit">Update</button>
+	</form>
+</section>
+
+<section>
+	<h3>Low Stock</h3>
+	<ul>
+		{% for it in low_stock_items %}
+		<li>{{ it.name }} — {{ it.stock_qty }}</li>
+		{% else %}
+		<li>None</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
+	<h3>Recent Orders</h3>
+	<ul>
+		{% for o in recent_orders %}
+		<li>#{{ o.order_id }} — {{ o.status }} — {{ o.created_at }}</li>
+		{% else %}
+		<li>No recent orders</li>
+		{% endfor %}
+	</ul>
+</section>
+
+<section>
 	<h3>Summary (last days)</h3>
 	<ul>
 		{% for s in summaries %}

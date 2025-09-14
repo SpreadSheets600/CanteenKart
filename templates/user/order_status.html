@@ -1,22 +1,39 @@
 {% extends 'base.html' %} {% block title %}Order Status - CanteenKart{% endblock %} {% block content %}
 <h1>Order #{{ order.order_id }}</h1>
-<p>Token: {{ order.token_code }}</p>
+<div id="order-data" data-order-id="{{ order.order_id }}" style="display: none"></div>
+<p>
+	Token: <strong id="token">{{ order.token_code }}</strong>
+	<button type="button" onclick="navigator.clipboard.writeText('{{ order.token_code }}')">Copy</button>
+</p>
+<div style="margin: 12px 0">
+	<img src="{{ url_for('cart.order_status_qr', order_id=order.order_id) }}" alt="Order QR" width="160" height="160" />
+	<div><small>Scan at counter to retrieve your order</small></div>
+	<div><a download href="{{ url_for('cart.order_status_qr', order_id=order.order_id) }}">Download QR</a></div>
+	<div><a href="{{ url_for('users.orders_history') }}">My Orders</a></div>
+</div>
 <div id="status">{{ order.status }}</div>
 
 <!-- Socket.IO client will be added to listen for updates -->
 {% if config.ENABLE_SOCKETIO %}
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+	if (typeof io === "undefined") {
+		var s = document.createElement("script");
+		s.src = "/socket.io/socket.io.js";
+		document.head.appendChild(s);
+	}
+</script>
 <script>
 	const socket = io();
-	socket.on('connect', () => {
+	socket.on("connect", () => {
 		// join will happen server-side based on session cookie
-		console.log('socket connected');
+		console.log("socket connected");
 	});
-		const THIS_ORDER_ID = {{ order.order_id | tojson }};
-		socket.on('order_update', (data) => {
-			if (data && data.order_id === THIS_ORDER_ID) {
-				document.getElementById('status').innerText = data.status;
-			}
-		});
+	const THIS_ORDER_ID = Number(document.getElementById("order-data").dataset.orderId);
+	socket.on("order_update", (data) => {
+		if (data && data.order_id === THIS_ORDER_ID) {
+			document.getElementById("status").innerText = data.status;
+		}
+	});
 </script>
 {% endif %} {% endblock %}
