@@ -11,7 +11,7 @@ from flask import (
 from sqlalchemy import extract
 from datetime import date
 
-from ..app.extensions import logger
+from app.extensions import logger
 from models.database import db
 from .utils import owner_only
 

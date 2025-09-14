@@ -7,7 +7,7 @@ from flask import (
     flash,
 )
 
-from ..app.extensions import logger
+from app.extensions import logger
 from models.models import MenuItem
 from models.database import db
 from .utils import owner_only

@@ -15,7 +15,7 @@ import qrcode
 import io
 
 from models.models import MenuItem, Order, OrderItem
-from ..app.extensions import logger
+from app.extensions import logger
 from models.database import db
 
 

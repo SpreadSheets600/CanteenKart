@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, session
 from flask_login import login_required, current_user
 
 from models.models import User, Order, Wallet
-from ..app.extensions import logger
+from app.extensions import logger
 
 
 users_bp = Blueprint("users", __name__, template_folder="../templates", url_prefix="")

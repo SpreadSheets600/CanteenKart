@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask import session
 
 from models.database import db
-from ..app.extensions import logger
+from app.extensions import logger
 from models.models import User, Wallet
 
 auth = Blueprint(
