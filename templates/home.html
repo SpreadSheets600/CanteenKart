@@ -1,9 +1,25 @@
 {% extends 'base.html' %} {% block title %}Home - CanteenKart{% endblock %} {% block content %}
-<h1>Welcome to CanteenKart</h1>
-{% if session.get('user_id') %}
-<p>Hi {{ session.get('user_name') }}!</p>
-{% if session.get('role') == 'owner' %}{% else %}
-<p><a href="#">Browse Menu</a></p>
-{% endif %} {% else %}
-<p>Please <a href="{{ url_for('auth.login') }}">login</a> or <a href="{{ url_for('auth.register') }}">signup</a>.</p>
-{% endif %} {% endblock %}
+<section class="hero min-h-[50vh] bg-base-200 rounded-xl">
+	<div class="hero-content text-center">
+		<div class="max-w-xl">
+			<h1 class="text-4xl font-bold">Quick, tasty, and cashless canteen orders</h1>
+			<p class="py-4 opacity-80">Browse the menu, add to cart, and pick up with a simple token. Owners get a clear dashboard, live orders, and stock tools.</p>
+			<div class="flex flex-col sm:flex-row gap-3 justify-center">
+				<a class="btn btn-primary" href="{{ url_for('menu.menu') }}">Browse Menu</a>
+				{% if not session.get('user_id') %}
+				<a class="btn" href="{{ url_for('auth.login') }}">Login</a>
+				<a class="btn btn-outline" href="{{ url_for('auth.register') }}">Sign Up</a>
+				{% else %}
+				<a class="btn" href="{{ url_for('owners.user_dashboard') }}">My Dashboard</a>
+				<a class="btn btn-outline" href="{{ url_for('cart.show_cart') }}">Cart</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+	{% if config.get('ANNOUNCEMENT') %}
+	<div class="absolute bottom-3 inset-x-3">
+		<div class="alert alert-info shadow"><span>{{ config.get('ANNOUNCEMENT') }}</span></div>
+	</div>
+	{% endif %}
+</section>
+{% endblock %}
