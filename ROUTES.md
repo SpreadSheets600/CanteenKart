@@ -1,17 +1,20 @@
 # CanteenKart Route Reference
 
-This document summarizes the HTTP routes, grouped by Blueprint, with methods, auth, purpose, and rendered templates.
+This document summarizes HTTP routes grouped by blueprint, including methods, auth, purpose, and templates.
 
 Legend:
+
 - Auth: public, login-required, owner-only (via `controllers.utils.owner_only`).
 - Templates are relative to `templates/`.
 
 ## Root
-- GET `/` — Home screen.
+
+- GET `/` — Home screen
   - Auth: public
-  - Template: `user/home.html`
+  - Template: `home.html`
 
 ## Auth (`controllers/auth.py`, blueprint `auth`, url_prefix `/auth`)
+
 - GET `/auth/login` — Login form
   - Auth: public
   - Template: `auth/login.html`
@@ -29,6 +32,7 @@ Legend:
   - Redirects to `/auth/login`
 
 ## Menu (`controllers/menu.py`, blueprint `menu`)
+
 - GET `/menu` — Public menu listing
   - Auth: public
   - Template: `user/menu.html`
@@ -48,6 +52,7 @@ Legend:
   - Redirects to `/owner/menu`
 
 ## Cart & Orders (User) (`controllers/cart.py`, blueprint `cart`)
+
 - GET `/cart` — Show current cart
   - Auth: public
   - Template: `user/cart.html`
@@ -62,15 +67,17 @@ Legend:
   - Template: `user/checkout.html`
 - POST `/checkout` — Place order (requires login)
   - Auth: login-required (enforced in handler)
-  - Creates `Order` and `OrderItem`s and emits `new_order` socket event if enabled
+  - Creates `Order` and `OrderItem`s; emits `new_order` socket event if enabled
   - Redirects to `/order_status/<order_id>`
 - GET `/order_status/<order_id>` — Order status page
   - Auth: login-recommended (not strictly enforced)
   - Template: `user/order_status.html`
-  - Also: GET `/order_status/<order_id>/qr.png` — QR code image for token/status
+- GET `/order_status/<order_id>/qr.png` — QR code image for token/status
+  - Auth: public
 
 ## Owner Orders (`controllers/orders.py`, blueprint `owner_orders`)
-- GET `/owner/orders` — List active orders (pending, preparing)
+
+- GET `/owner/orders` — List active orders (pending, preparing, ready)
   - Auth: owner-only
   - Template: `owner/owner_orders.html`
   - Query: `?status=pending|preparing|ready` to filter
@@ -81,20 +88,25 @@ Legend:
   - Redirects to `/owner/orders`
 
 ## Owners dashboard & User dashboard (`controllers/owners.py`, blueprint `owners`)
+
 - GET `/owner/dashboard` — Business overview for owners
   - Auth: owner-only
   - Template: `owner/dashboard.html`
-- POST `/owner/open` — Toggle canteen open/close in-memory flag
+- POST `/owner/open` — Toggle canteen open/close flag (in-memory)
   - Auth: owner-only
+  - Body: `state` in {open|close|true|false|1|0|on|off}
 - POST `/owner/announcement` — Set simple announcement banner
   - Auth: owner-only
-- GET/POST `/owner/scanner` — Token input scanner (MVP for kiosk)
+  - Body: `text`
+- GET/POST `/owner/scanner` — Token input scanner (kiosk-style)
   - Auth: owner-only
-- GET `/owner/stock` — Stock & inventory view (Phase 2 base)
+  - On POST: marks matching order as completed; emits `order_update`
+- GET `/owner/stock` — Stock & inventory view
   - Auth: owner-only
   - Template: `owner/stock.html`
 - POST `/owner/stock/update/<item_id>` — Update stock quantity for an item
   - Auth: owner-only
+  - Body: `stock_qty`
 - POST `/owner/stock/auto_disable` — Disable items with zero stock
   - Auth: owner-only
 - GET `/dashboard` — User dashboard for current user
@@ -102,6 +114,7 @@ Legend:
   - Template: `user/dashboard.html`
 
 ## Owner Users (`controllers/owners.py`, blueprint `owners`)
+
 - GET `/owner/users` — List users with stats
   - Auth: owner-only
   - Template: `owner/users_list.html`
@@ -110,6 +123,7 @@ Legend:
   - Template: `owner/user_detail.html`
 
 ## User pages (`controllers/users.py`, blueprint `users`)
+
 - GET `/orders/history` — My orders list
   - Auth: login-required
   - Template: `user/orders_history.html`
@@ -121,6 +135,7 @@ Legend:
   - Template: `user/profile.html`
 
 ## Notes
+
 - Access control for owner routes is centralized in `controllers/utils.py` via `@owner_only`.
 - Login is handled by Flask-Login; `login_manager.login_view` is `auth.login`.
 - Minimal input validation is applied on menu management and status updates to prevent crashes from bad inputs.
