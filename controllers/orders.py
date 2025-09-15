@@ -58,7 +58,7 @@ def update_status(order_id: int):
         socketio = current_app.extensions.get("socketio")
         if socketio:
             socketio.emit(
-                "order_update", {"order_id": order.order_id, "status": order.status}
+                "order_update", {"order_id": order.order_id, "status": order.status}, room=f"user_{order.user_id}"
             )
     except Exception:
         logger.exception("Failed To Emit Order Update Via SocketIO")

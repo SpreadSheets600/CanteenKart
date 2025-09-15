@@ -11,8 +11,7 @@ from flask import (
 from sqlalchemy import extract
 from datetime import date
 
-from app.extensions import logger
-from models.database import db
+from app.extensions import db, logger
 from .utils import owner_only
 
 from models.models import (
@@ -193,11 +192,19 @@ def user_detail(user_id: int):
 @owners_bp.route("/dashboard")
 def user_dashboard():
     user_id = session.get("user_id")
+
     if not user_id:
         flash("Please Login In View Dashboard", "warning")
         logger.warning("Dashboard Access Attempt Without Login")
 
         return redirect(url_for("auth.login"))
+
+    user_details = User.query.options(db.selectinload(User.transactions)).get(user_id)
+
+    if user_details:
+        user_details.transactions = sorted(
+            user_details.transactions, key=lambda t: t.created_at, reverse=True
+        )
 
     orders = (
         Order.query.filter_by(user_id=int(user_id))
@@ -207,13 +214,6 @@ def user_dashboard():
     )
 
     wallet = Wallet.query.filter_by(user_id=int(user_id)).first()
-
-    activities = (
-        UserActivity.query.filter_by(user_id=int(user_id))
-        .order_by(UserActivity.created_at.desc())
-        .limit(10)
-        .all()
-    )
 
     all_orders = (
         Order.query.filter_by(user_id=int(user_id))
@@ -238,11 +238,11 @@ def user_dashboard():
 
     return render_template(
         "user/dashboard.html",
+        user=user_details,
         orders=orders,
         wallet=wallet,
         avg_order=avg_order,
         last_order=last_order,
-        activities=activities,
         total_spent=total_spent,
         total_orders=total_orders,
         last_order_items=last_order_items,
@@ -307,7 +307,7 @@ def scanner():
             socketio = current_app.extensions.get("socketio")
             if socketio:
                 socketio.emit(
-                    "order_update", {"order_id": order.order_id, "status": order.status}
+                    "order_update", {"order_id": order.order_id, "status": order.status}, room=f"user_{order.user_id}"
                 )
         except Exception:
             pass

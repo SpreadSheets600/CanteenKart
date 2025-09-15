@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from pathlib import Path
+from datetime import datetime
 
 from .config import Config
 from .extensions import db, login_manager, logger
@@ -42,6 +43,37 @@ def create_app(config_object: str | object = Config):
 
     db.init_app(app)
     login_manager.init_app(app)
+
+    def timeago(dt):
+        if not dt:
+            return ""
+
+        now = datetime.utcnow()
+        diff = now - dt.replace(tzinfo=None) if dt.tzinfo else now - dt
+
+        seconds = diff.total_seconds()
+
+        if seconds < 60:
+            return "just now"
+        minutes = seconds / 60
+        if minutes < 60:
+            return f"{int(minutes)} minute{'s' if int(minutes) != 1 else ''} ago"
+        hours = minutes / 60
+        if hours < 24:
+            return f"{int(hours)} hour{'s' if int(hours) != 1 else ''} ago"
+        days = hours / 24
+        if days < 7:
+            return f"{int(days)} day{'s' if int(days) != 1 else ''} ago"
+        weeks = days / 7
+        if weeks < 4:
+            return f"{int(weeks)} week{'s' if int(weeks) != 1 else ''} ago"
+        months = days / 30
+        if months < 12:
+            return f"{int(months)} month{'s' if int(months) != 1 else ''} ago"
+        years = days / 365
+        return f"{int(years)} year{'s' if int(years) != 1 else ''} ago"
+
+    app.jinja_env.filters["timeago"] = timeago
 
     try:
         from flask_socketio import SocketIO, join_room
@@ -106,15 +138,38 @@ def create_app(config_object: str | object = Config):
 
     @app.context_processor
     def inject_user():
+        from .models.menu_item import MenuItem
+
         user_name = session.get("user_name")
         if session.get("user_id") and not user_name:
             try:
                 user = User.query.get(int(session.get("user_id")))
                 if user:
                     session["user_name"] = user.name
+                    user_name = user.name
             except Exception:
                 pass
-        return {}
+
+        cart = session.get("cart", {})
+
+        cart_count = 0
+        cart_subtotal = 0.0
+        for item_id_str, qty in cart.items():
+            try:
+                item_id = int(item_id_str)
+                qty = int(qty)
+                item = MenuItem.query.get(item_id)
+                if item:
+                    cart_count += qty
+                    cart_subtotal += item.price * qty
+            except Exception:
+                continue
+
+        return {
+            "user_name": user_name,
+            "cart_count": cart_count,
+            "cart_subtotal": cart_subtotal,
+        }
 
     @app.errorhandler(404)
     def page_not_found(e):
