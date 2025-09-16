@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, current_app
 from pathlib import Path
 from datetime import datetime
 
@@ -141,10 +141,11 @@ def create_app(config_object: str | object = Config):
         from .models.menu_item import MenuItem
 
         user_name = session.get("user_name")
-        if session.get("user_id") and not user_name:
+        user = None
+        if session.get("user_id"):
             try:
                 user = User.query.get(int(session.get("user_id")))
-                if user:
+                if user and not user_name:
                     session["user_name"] = user.name
                     user_name = user.name
             except Exception:
@@ -160,15 +161,20 @@ def create_app(config_object: str | object = Config):
                 qty = int(qty)
                 item = MenuItem.query.get(item_id)
                 if item:
+                    price = item.price
+                    if user and user.email and user.role == 'student':
+                        price *= 0.9
                     cart_count += qty
-                    cart_subtotal += item.price * qty
+                    cart_subtotal += price * qty
             except Exception:
                 continue
 
         return {
+            "user": user,
             "user_name": user_name,
             "cart_count": cart_count,
             "cart_subtotal": cart_subtotal,
+            "announcement": current_app.config.get("ANNOUNCEMENT", ""),
         }
 
     @app.errorhandler(404)

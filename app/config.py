@@ -11,3 +11,6 @@ class Config:
 
     ADMIN_PHONE = os.environ.get("ADMIN_PHONE", "0000000000")
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "adminpass")
+
+    GEMINI_API_KEY = os.environ.get("AIzaSyDDimhXMBQPuhXCfu0EINGGkUPH6Fjr9ww")
+    
