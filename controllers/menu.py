@@ -6,11 +6,15 @@ from flask import (
     request,
     flash,
 )
+import os
+from werkzeug.utils import secure_filename
+from flask_login import current_user
 
 from app.extensions import logger
 from models.models import MenuItem
 from models.database import db
 from .utils import owner_only
+from .recommendations import get_user_recommendations
 
 
 menu_bp = Blueprint("menu", __name__, template_folder="../templates", url_prefix="")
@@ -19,7 +23,15 @@ menu_bp = Blueprint("menu", __name__, template_folder="../templates", url_prefix
 @menu_bp.route("/menu")
 def menu():
     items = MenuItem.query.order_by(MenuItem.name).all()
-    return render_template("user/menu.html", items=items)
+
+    # Get user recommendations if logged in
+    user_recommendations = []
+    if current_user and current_user.is_authenticated:
+        user_recommendations = get_user_recommendations(current_user.user_id, 5)
+
+    return render_template(
+        "user/menu.html", items=items, user_recommendations=user_recommendations
+    )
 
 
 @menu_bp.route("/owner/menu")
@@ -53,12 +65,26 @@ def add_item():
 
         return redirect(url_for("menu.owner_menu"))
 
+    # Handle image upload
+    image_path = None
+    if "image" in request.files:
+        file = request.files["image"]
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            # Create images directory if it doesn't exist
+            images_dir = os.path.join("static", "images")
+            os.makedirs(images_dir, exist_ok=True)
+            file_path = os.path.join(images_dir, filename)
+            file.save(file_path)
+            image_path = f"images/{filename}"
+
     item = MenuItem(
         name=name,
         price=price,
         description=description,
         stock_qty=stock_qty,
         is_available=is_available,
+        image=image_path,
     )
     db.session.add(item)
     db.session.commit()
@@ -89,6 +115,18 @@ def edit_item(item_id: int):
         pass
 
     item.is_available = bool(request.form.get("is_available"))
+
+    # Handle image upload
+    if "image" in request.files:
+        file = request.files["image"]
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            # Create images directory if it doesn't exist
+            images_dir = os.path.join("static", "images")
+            os.makedirs(images_dir, exist_ok=True)
+            file_path = os.path.join(images_dir, filename)
+            file.save(file_path)
+            item.image = f"images/{filename}"
 
     db.session.add(item)
     db.session.commit()

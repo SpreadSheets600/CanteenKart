@@ -7,11 +7,14 @@ from flask import (
     session,
     url_for,
     flash,
+    jsonify,
 )
+from flask_login import current_user, login_required
 from sqlalchemy import extract
 from datetime import date
 
 from app.extensions import db, logger
+from models.models import Order, OrderItem
 from .utils import owner_only
 
 from models.models import (
@@ -21,9 +24,10 @@ from models.models import (
     Feedback,
     MenuItem,
     Wallet,
-    Order,
     User,
+    RawItems,
 )
+from .recommendations import get_top_orders
 
 
 owners_bp = Blueprint("owners", __name__, template_folder="../templates", url_prefix="")
@@ -75,10 +79,19 @@ def owner_dashboard():
         .all()
     )
 
-    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(15).all()
+    recent_orders = (
+        Order.query
+        .options(db.selectinload(Order.user), db.selectinload(Order.items).selectinload(OrderItem.menu_item))
+        .order_by(Order.created_at.desc())
+        .limit(15)
+        .all()
+    )
 
     canteen_open = current_app.config.get("CANTEEN_OPEN", True)
     announcement = current_app.config.get("ANNOUNCEMENT", "")
+
+    # Get top orders for visual display
+    top_orders = get_top_orders(5)
 
     return render_template(
         "owner/dashboard.html",
@@ -93,6 +106,8 @@ def owner_dashboard():
         recent_orders=recent_orders,
         low_stock_items=low_stock_items,
         recent_feedback=recent_feedback,
+        top_orders=top_orders,
+        user=current_user,
     )
 
 
@@ -103,8 +118,12 @@ def list_users():
 
     user_stats = []
     for u in users:
-        orders_q = Order.query.filter_by(user_id=u.user_id).order_by(
-            Order.created_at.desc()
+        orders_q = (
+            Order.query.options(
+                db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+            )
+            .filter_by(user_id=u.user_id)
+            .order_by(Order.created_at.desc())
         )
         orders_count = orders_q.count()
         wallet = Wallet.query.filter_by(user_id=u.user_id).first()
@@ -144,7 +163,10 @@ def user_detail(user_id: int):
     user = User.query.get_or_404(user_id)
 
     orders = (
-        Order.query.filter_by(user_id=user.user_id)
+        Order.query.options(
+            db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+        )
+        .filter_by(user_id=user.user_id)
         .order_by(Order.created_at.desc())
         .limit(20)
         .all()
@@ -159,7 +181,13 @@ def user_detail(user_id: int):
         .all()
     )
 
-    all_orders = Order.query.filter_by(user_id=user.user_id).all()
+    all_orders = (
+        Order.query.options(
+            db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+        )
+        .filter_by(user_id=user.user_id)
+        .all()
+    )
     total_spent = 0.0
 
     for o in all_orders:
@@ -207,7 +235,10 @@ def user_dashboard():
         )
 
     orders = (
-        Order.query.filter_by(user_id=int(user_id))
+        Order.query.options(
+            db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+        )
+        .filter_by(user_id=int(user_id))
         .order_by(Order.created_at.desc())
         .limit(10)
         .all()
@@ -216,7 +247,10 @@ def user_dashboard():
     wallet = Wallet.query.filter_by(user_id=int(user_id)).first()
 
     all_orders = (
-        Order.query.filter_by(user_id=int(user_id))
+        Order.query.options(
+            db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+        )
+        .filter_by(user_id=int(user_id))
         .order_by(Order.created_at.desc())
         .all()
     )
@@ -275,6 +309,28 @@ def set_announcement():
     return redirect(url_for("owners.owner_dashboard"))
 
 
+@owners_bp.route("/api/announcements", methods=["GET"])
+@login_required
+def get_announcements():
+    """API endpoint to fetch current announcements"""
+    announcement = current_app.config.get("ANNOUNCEMENT", "")
+
+    announcements = []
+    if announcement:
+        announcements.append({
+            "id": "main_announcement",
+            "title": "Canteen Announcement",
+            "message": announcement,
+            "type": "info",
+            "timestamp": None  # Current announcement doesn't have a timestamp
+        })
+
+    return jsonify({
+        "success": True,
+        "announcements": announcements
+    })
+
+
 @owners_bp.route("/owner/scanner", methods=["GET", "POST"])
 @owner_only
 def scanner():
@@ -307,7 +363,9 @@ def scanner():
             socketio = current_app.extensions.get("socketio")
             if socketio:
                 socketio.emit(
-                    "order_update", {"order_id": order.order_id, "status": order.status}, room=f"user_{order.user_id}"
+                    "order_update",
+                    {"order_id": order.order_id, "status": order.status},
+                    room=f"user_{order.user_id}",
                 )
         except Exception:
             pass
@@ -363,3 +421,122 @@ def stock_auto_disable():
     logger.info("Auto-Disabled Out-Of-Stock Items")
 
     return redirect(url_for("owners.stock_page"))
+
+
+# Raw Items Management Routes
+@owners_bp.route("/owner/raw-items")
+@owner_only
+def raw_items_page():
+    raw_items = RawItems.query.order_by(RawItems.name).all()
+    return render_template("owner/raw_items.html", raw_items=raw_items)
+
+
+@owners_bp.route("/owner/raw-items/add", methods=["GET", "POST"])
+@owner_only
+def add_raw_item():
+    if request.method == "POST":
+        name = request.form.get("name")
+        description = request.form.get("description")
+        stock_qty = request.form.get("stock_qty", 0)
+
+        if not name:
+            flash("Item name is required!", "error")
+            return redirect(url_for("owners.add_raw_item"))
+
+        try:
+            stock_qty = int(stock_qty) if stock_qty else 0
+        except ValueError:
+            stock_qty = 0
+
+        raw_item = RawItems(
+            name=name,
+            description=description,
+            stock_qty=stock_qty
+        )
+        db.session.add(raw_item)
+        db.session.commit()
+
+        flash(f"Raw item '{name}' added successfully!", "success")
+        logger.info(f"Raw item '{name}' added by owner {current_user.user_id}")
+
+        return redirect(url_for("owners.raw_items_page"))
+
+    return render_template("owner/add_raw_item.html")
+
+
+@owners_bp.route("/owner/raw-items/<int:raw_item_id>/edit", methods=["GET", "POST"])
+@owner_only
+def edit_raw_item(raw_item_id):
+    raw_item = RawItems.query.get_or_404(raw_item_id)
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        description = request.form.get("description")
+        stock_qty = request.form.get("stock_qty", 0)
+
+        if not name:
+            flash("Item name is required!", "error")
+            return redirect(url_for("owners.edit_raw_item", raw_item_id=raw_item_id))
+
+        try:
+            stock_qty = int(stock_qty) if stock_qty else 0
+        except ValueError:
+            stock_qty = 0
+
+        raw_item.name = name
+        raw_item.description = description
+        raw_item.stock_qty = stock_qty
+
+        db.session.commit()
+
+        flash(f"Raw item '{name}' updated successfully!", "success")
+        logger.info(f"Raw item '{name}' updated by owner {current_user.user_id}")
+
+        return redirect(url_for("owners.raw_items_page"))
+
+    return render_template("owner/edit_raw_item.html", raw_item=raw_item)
+
+
+@owners_bp.route("/owner/raw-items/<int:raw_item_id>/delete", methods=["POST"])
+@owner_only
+def delete_raw_item(raw_item_id):
+    raw_item = RawItems.query.get_or_404(raw_item_id)
+
+    name = raw_item.name
+    db.session.delete(raw_item)
+    db.session.commit()
+
+    flash(f"Raw item '{name}' deleted successfully!", "success")
+    logger.info(f"Raw item '{name}' deleted by owner {current_user.user_id}")
+
+    return redirect(url_for("owners.raw_items_page"))
+
+
+@owners_bp.route("/owner/raw-items/<int:raw_item_id>/update-stock", methods=["POST"])
+@owner_only
+def update_raw_item_stock(raw_item_id):
+    raw_item = RawItems.query.get_or_404(raw_item_id)
+
+    action = request.form.get("action")
+    quantity = request.form.get("quantity", 0)
+
+    try:
+        quantity = int(quantity) if quantity else 0
+    except ValueError:
+        quantity = 0
+
+    if action == "add":
+        raw_item.stock_qty += quantity
+        flash(f"Added {quantity} units to {raw_item.name}", "success")
+    elif action == "subtract":
+        if raw_item.stock_qty >= quantity:
+            raw_item.stock_qty -= quantity
+            flash(f"Removed {quantity} units from {raw_item.name}", "success")
+        else:
+            flash("Cannot remove more than available stock!", "error")
+            return redirect(url_for("owners.raw_items_page"))
+
+    db.session.commit()
+    logger.info(f"Stock updated for raw item '{raw_item.name}' by owner {current_user.user_id}")
+
+    return redirect(url_for("owners.raw_items_page"))

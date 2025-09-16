@@ -77,6 +77,7 @@ def register():
     if request.method == "POST":
         phone = request.form.get("phone")
         name = request.form.get("name") or ""
+        email = request.form.get("email") or ""
         password = request.form.get("password")
 
         if not phone or not password:
@@ -93,11 +94,21 @@ def register():
 
             return render_template("auth/signup.html")
 
+        if email and User.query.filter_by(email=email).first():
+            flash("Email Already Registered!", "warning")
+            logger.warning(
+                f"Registration Attempt For Already Registered Email : {email}"
+            )
+
+            return render_template("auth/signup.html")
+
         user = User(
             phone=phone,
             name=name or phone,
+            email=email or None,
             role="student",
             password_hash=generate_password_hash(password),
+            profile_picture=f"https://api.dicebear.com/9.x/lorelei/svg?seed={name or phone}",
         )
         db.session.add(user)
         db.session.commit()

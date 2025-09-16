@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session
+from flask import Blueprint, render_template, redirect, url_for, flash, session, request
 from flask_login import login_required, current_user
 
-from models.models import User, Order, Wallet
-from app.extensions import logger
+from models.models import Order, OrderItem
+from app.extensions import db, logger
 
 
 users_bp = Blueprint("users", __name__, template_folder="../templates", url_prefix="")
@@ -12,7 +12,10 @@ users_bp = Blueprint("users", __name__, template_folder="../templates", url_pref
 @login_required
 def orders_history():
     orders = (
-        Order.query.filter_by(user_id=current_user.user_id)
+        Order.query.options(
+            db.selectinload(Order.items).selectinload(OrderItem.menu_item)
+        )
+        .filter_by(user_id=current_user.user_id)
         .order_by(Order.created_at.desc())
         .limit(50)
         .all()
@@ -47,53 +50,17 @@ def reorder(order_id: int):
     return redirect(url_for("cart.show_cart"))
 
 
-@users_bp.route("/profile", methods=["GET", "POST"])
+@users_bp.route("/profile/update", methods=["POST"])
 @login_required
-def profile():
-    user: User = current_user  # type: ignore
-    wallet = Wallet.query.filter_by(user_id=user.user_id).first()
+def update_profile():
+    profile_picture = request.form.get("profile_picture")
 
-    if session.get("_method") == "POST" or (hasattr(session, "_flashes") and False):
-        pass
+    if profile_picture:
+        current_user.profile_picture = profile_picture
+        db.session.commit()
+        flash("Profile picture updated successfully!", "success")
+        logger.info(f"User {current_user.user_id} updated profile picture")
+    else:
+        flash("Profile picture URL is required!", "warning")
 
-    if session.get("request_method") == "POST":
-        pass
-
-    if session.get("profile_update"):
-        session.pop("profile_update", None)
-
-    if session.get("_formdata"):
-        session.pop("_formdata", None)
-
-    if session.get("_errors"):
-        session.pop("_errors", None)
-
-    if session.get("_csrf_token"):
-        pass
-
-    if session.get("_profile_post"):
-        session.pop("_profile_post", None)
-
-    from flask import request
-
-    if request.method == "POST":
-        new_name = (request.form.get("name") or "").strip()
-
-        if new_name:
-            user.name = new_name
-            from models.database import db
-
-            db.session.add(user)
-            db.session.commit()
-
-            flash("Profile Updated", "success")
-            logger.info(f"User {user.user_id} Updated Profile Name To {new_name}")
-        else:
-            flash("Name Cannot Be Empty", "warning")
-            logger.warning(
-                f"User {user.user_id} Attempted To Update Profile With Empty Name"
-            )
-
-        return redirect(url_for("users.profile"))
-
-    return render_template("user/profile.html", user=user, wallet=wallet)
+    return redirect(url_for("users.profile"))
