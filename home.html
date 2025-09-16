@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Canteen Website</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://unpkg.com/feather-icons"></script>
+		<style>
+			/* Simple fade-in animations */
+			.fade-in {
+				opacity: 0;
+				transform: translateY(30px);
+				transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+			}
+			.fade-in.visible {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		</style>
+	</head>
+	<body class="bg-gray-50 text-gray-800">
+		<!-- Navbar -->
+		<header class="sticky top-0 z-50 bg-white shadow-md">
+			<nav class="max-w-7xl mx-auto flex items-center justify-between p-4">
+				<a href="home.html" class="text-2xl font-bold text-black">CanteenKart</a>
+				<ul class="hidden md:flex space-x-8 font-medium">
+					<li><a href="home.html" class="hover:text-blue-600">Home</a></li>
+					<li><a href="menu.html" class="hover:text-blue-600">Menu</a></li>
+					<li><a href="home.html" class="hover:text-blue-600">About</a></li>
+					<li><a href="home.html.html#contact" class="hover:text-blue-600">Contact</a></li>
+				</ul>
+
+				<!-- Right-side tray -->
+				<div class="flex items-center space-x-6">
+					<!-- Cart -->
+					<button id="cart-btn" class="relative">
+						<i data-feather="shopping-cart" class="w-6 h-6"></i>
+						<span id="cart-count" class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+					</button>
+
+					<!-- Profile Dropdown -->
+					<div class="relative">
+						<button id="profile-btn" class="flex items-center space-x-2 focus:outline-none">
+							<img src="https://i.pravatar.cc/40" alt="Profile" class="w-9 h-9 rounded-full border border-gray-300" />
+						</button>
+						<!-- Dropdown -->
+						<div id="profile-menu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-lg py-3 animate-fadeIn">
+							<div class="px-4 py-3 border-b">
+								<div class="flex items-center space-x-3">
+									<img src="https://i.pravatar.cc/60" alt="User Avatar" class="w-12 h-12 rounded-full" />
+									<div>
+										<p class="font-semibold text-gray-800">John Doe</p>
+										<p class="text-sm text-gray-500">john@example.com</p>
+									</div>
+								</div>
+							</div>
+							<a href="#" class="block px-4 py-2 text-gray-700 hover:bg-blue-50">View Profile</a>
+						</div>
+					</div>
+
+					<!-- Mobile menu button -->
+					<button class="md:hidden" id="menu-btn">
+						<i data-feather="menu" class="w-6 h-6"></i>
+					</button>
+				</div>
+			</nav>
+
+			<!-- Mobile Menu -->
+			<div id="mobile-menu" class="hidden md:hidden bg-white px-6 py-4">
+				<a href="" class="block py-2">Home</a>
+				<a href="menu.html" class="block py-2">Menu</a>
+				<a href="home.html" class="block py-2">About</a>
+				<a href="home.html#contact" class="block py-2">Contact</a>
+			</div>
+		</header>
+
+		<!-- Animation CSS -->
+		<style>
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(-10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+			.animate-fadeIn {
+				animation: fadeIn 0.3s ease-out;
+			}
+		</style>
+
+		<!-- Script -->
+		<script>
+			feather.replace();
+
+			// Profile dropdown toggle
+			const profileBtn = document.getElementById("profile-btn");
+			const profileMenu = document.getElementById("profile-menu");
+
+			profileBtn.addEventListener("click", () => {
+				profileMenu.classList.toggle("hidden");
+			});
+
+			// Close profile menu when clicking outside
+			window.addEventListener("click", (e) => {
+				if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+					profileMenu.classList.add("hidden");
+				}
+			});
+		</script>
+
+		<!-- Hero Section with Background -->
+		<section id="home" class="relative h-[90vh] flex items-center justify-center text-center bg-cover bg-center" style="background-image: url('https://i.pinimg.com/736x/74/f3/1e/74f31e9438f299d6d8a4261fb7e19c31.jpg')">
+			<div class="absolute inset-0 bg-black/50"></div>
+			<div class="relative z-10 text-white max-w-2xl px-4 fade-in">
+				<h2 class="text-4xl md:text-6xl font-extrabold drop-shadow-lg">Welcome to CanteenKart</h2>
+				<p class="mt-4 text-lg md:text-xl drop-shadow-md">Delicious food, affordable prices, and a cozy space for everyone!</p>
+				<a href="menu.html" class="mt-6 inline-block bg-blue-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-blue-600 transition transform hover:scale-105">View Menu</a>
+			</div>
+		</section>
+
+		<!-- About -->
+		<section id="about" class="bg-gray-100 py-16 fade-in">
+			<div class="max-w-5xl mx-auto text-center px-6">
+				<h3 class="text-3xl font-bold mb-6">About Us</h3>
+				<p class="text-lg text-gray-700 leading-relaxed">Our canteen is the heart of campus life, serving fresh, healthy, and affordable meals every day. Whether you’re grabbing a quick bite or enjoying time with friends, we make sure every meal is memorable.</p>
+			</div>
+		</section>
+
+		<!-- Contact -->
+		<section id="feedback" class="py-16 max-w-5xl mx-auto px-6 fade-in">
+			<h3 class="text-3xl font-bold text-center mb-6">Feedback</h3>
+			<form class="bg-white shadow-lg rounded-xl p-6 space-y-4">
+				<input type="text" placeholder="Your Name" class="w-full border p-3 rounded-lg" />
+				<input type="email" placeholder="your order id" class="w-full border p-3 rounded-lg" />
+				<textarea placeholder="Your feedback" class="w-full border p-3 rounded-lg"></textarea>
+				<button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">Send Message</button>
+			</form>
+		</section>
+
+		<!-- Footer -->
+		<footer class="bg-blue-600 text-white text-center py-6">
+			<p>© 2025 CanteenKart | Welcome</p>
+		</footer>
+
+		<!-- Cart Modal -->
+		<div id="cart-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+			<div class="bg-white rounded-xl shadow-lg w-96 p-6">
+				<h4 class="text-xl font-bold mb-4">Your Cart</h4>
+				<ul id="cart-items" class="space-y-2 mb-4"></ul>
+				<button onclick="closeCart()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Close</button>
+			</div>
+		</div>
+
+		<!-- Scripts -->
+		<script>
+			feather.replace();
+
+			// Fade-in animation when scrolling
+			const elements = document.querySelectorAll(".fade-in");
+			function revealOnScroll() {
+				elements.forEach((el) => {
+					const rect = el.getBoundingClientRect();
+					if (rect.top < window.innerHeight - 100) {
+						el.classList.add("visible");
+					}
+				});
+			}
+			window.addEventListener("scroll", revealOnScroll);
+			window.addEventListener("load", revealOnScroll);
+
+			// Mobile menu toggle
+			const menuBtn = document.getElementById("menu-btn");
+			const mobileMenu = document.getElementById("mobile-menu");
+			menuBtn.addEventListener("click", () => {
+				mobileMenu.classList.toggle("hidden");
+			});
+
+			// Cart functionality
+			let cart = [];
+			function addToCart(item) {
+				cart.push(item);
+				document.getElementById("cart-count").innerText = cart.length;
+				alert(item + " added to cart!");
+			}
+			document.getElementById("cart-btn").addEventListener("click", () => {
+				const cartModal = document.getElementById("cart-modal");
+				const cartItems = document.getElementById("cart-items");
+				cartItems.innerHTML = cart.length ? cart.map((i) => `<li>🍴 ${i}</li>`).join("") : "<li>No items in cart.</li>";
+				cartModal.classList.remove("hidden");
+			});
+			function closeCart() {
+				document.getElementById("cart-modal").classList.add("hidden");
+			}
+		</script>
+	</body>
+</html>
