@@ -12,7 +12,17 @@ class MenuItem(db.Model):
     price = db.Column(db.Float, nullable=False, default=0.0)
     stock_qty = db.Column(db.Integer, nullable=False, default=0)
     is_available = db.Column(db.Boolean, nullable=False, default=True)
+    image = db.Column(db.String)
 
     order_items = relationship(
         "OrderItem", back_populates="menu_item", cascade="all, delete-orphan"
     )
+
+
+class RawItems(db.Model):
+    __tablename__ = "raw_items"
+
+    raw_item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+    stock_qty = db.Column(db.Integer, nullable=False, default=0)

@@ -11,9 +11,18 @@ class User(db.Model, UserMixin):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     phone = db.Column(db.String, unique=True, nullable=False)
     name = db.Column(db.String, nullable=False)
+
+    email = db.Column(db.String, unique=True, nullable=True)
+
     role = db.Column(db.String, nullable=False, default="student")
     password_hash = db.Column(db.String)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    profile_picture = db.Column(
+        db.String,
+        nullable=True,
+        default="https://api.dicebear.com/9.x/lorelei/svg?seed=User",
+    )
 
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
     wallet = relationship(
