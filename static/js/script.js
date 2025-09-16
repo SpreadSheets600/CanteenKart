@@ -106,8 +106,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         button.disabled = true;
 
-        fetch(form.action, {
-            method: form.method,
+        const addUrl = form.getAttribute('action');
+        const addMethod = (form.getAttribute('method') || 'POST').toUpperCase();
+        fetch(addUrl, {
+            method: addMethod,
             body: formData
         })
         .then(response => {
@@ -147,7 +149,19 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         
         const form = event.target;
-        const timeSlot = document.getElementById('time-slot').value;
+        let timeSlot = null;
+        const timeSlotElem = document.getElementById('time-slot');
+        if (timeSlotElem) {
+            // If it's a group of radio inputs returned as a NodeList, find the checked one
+            if (NodeList.prototype.isPrototypeOf(timeSlotElem) || HTMLCollection.prototype.isPrototypeOf(timeSlotElem)) {
+                const checked = Array.from(timeSlotElem).find(el => el.checked);
+                timeSlot = checked ? checked.value : null;
+            } else if (timeSlotElem.type === 'radio' || timeSlotElem.type === 'checkbox') {
+                timeSlot = timeSlotElem.checked ? timeSlotElem.value : null;
+            } else {
+                timeSlot = timeSlotElem.value;
+            }
+        }
         const button = form.querySelector('button[type="submit"]');
 
         if (!timeSlot) {
@@ -193,6 +207,61 @@ document.addEventListener('DOMContentLoaded', function() {
         if (orderForm) {
             orderForm.addEventListener('submit', handlePlaceOrder);
         }
+        // Attach AJAX handlers to update forms (inc/dec/qty)
+        const updateForms = document.querySelectorAll('form[action^="/cart/update/"]');
+        updateForms.forEach(form => {
+            // Submit handler (AJAX)
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                try {
+                    const updateUrl = form.getAttribute('action');
+                    const updateMethod = (form.getAttribute('method') || 'POST').toUpperCase();
+                    const resp = await fetch(updateUrl, { method: updateMethod, body: formData });
+                    if (!resp.ok) throw new Error('Update failed');
+                    // Reload the cart page to show updated totals
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Failed to update cart:', err);
+                }
+            });
+
+            // Buttons: increment/decrement behavior (adjust the input then submit)
+            const btnInc = form.querySelector('button[name="action"][value="inc"]');
+            const btnDec = form.querySelector('button[name="action"][value="dec"]');
+            const qtyInput = form.querySelector('input[name="qty"]');
+
+            function submitFormSafely() {
+                // Prefer requestSubmit so submit event listeners fire; fallback to dispatchEvent
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+            }
+
+            if (btnInc && qtyInput) {
+                btnInc.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    let current = parseInt(qtyInput.value) || 0;
+                    const max = parseInt(qtyInput.getAttribute('max')) || 999999;
+                    current = Math.min(current + 1, max);
+                    qtyInput.value = current;
+                    // ensure the action field indicates an explicit qty submission (clear action or keep)
+                    submitFormSafely();
+                });
+            }
+
+            if (btnDec && qtyInput) {
+                btnDec.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    let current = parseInt(qtyInput.value) || 0;
+                    current = Math.max(current - 1, 0);
+                    qtyInput.value = current;
+                    submitFormSafely();
+                });
+            }
+        });
     }
     else if (currentPath.startsWith('/confirmation/')) {
         // Confirmation page: Handle real-time updates

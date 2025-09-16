@@ -1,0 +1,103 @@
+{% extends 'base.html' %} {% block content %}
+
+<div class="max-w-2xl mx-auto">
+	<div class="mb-6">
+		<a href="{{ url_for('owners.raw_items_page') }}" class="btn btn-ghost btn-sm mb-4">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+			</svg>
+			Back to Raw Items
+		</a>
+		<h2 class="text-3xl font-bold">Edit Raw Item</h2>
+		<p class="text-gray-600">Update the details of {{ raw_item.name }}</p>
+	</div>
+
+	<div class="card bg-base-200 shadow">
+		<div class="card-body">
+			<form method="post" class="space-y-6">
+				<div class="form-control">
+					<label class="label">
+						<span class="label-text font-semibold">Item Name *</span>
+					</label>
+					<input type="text" name="name" class="input input-bordered" value="{{ raw_item.name }}" required />
+					<label class="label">
+						<span class="label-text-alt">Enter the name of the raw material</span>
+					</label>
+				</div>
+
+				<div class="form-control">
+					<label class="label">
+						<span class="label-text font-semibold">Description</span>
+					</label>
+					<textarea name="description" class="textarea textarea-bordered h-24">{{ raw_item.description or '' }}</textarea>
+					<label class="label">
+						<span class="label-text-alt">Optional details about the item</span>
+					</label>
+				</div>
+
+				<div class="form-control">
+					<label class="label">
+						<span class="label-text font-semibold">Current Stock Quantity</span>
+					</label>
+					<input type="number" name="stock_qty" class="input input-bordered" value="{{ raw_item.stock_qty }}" min="0" />
+					<label class="label">
+						<span class="label-text-alt">Update the current stock level</span>
+					</label>
+				</div>
+
+				<div class="form-control">
+					<label class="label">
+						<span class="label-text font-semibold">Unit of Measurement</span>
+					</label>
+					<select class="select select-bordered">
+						<option value="pieces">Pieces</option>
+						<option value="kg">Kilograms</option>
+						<option value="liters">Liters</option>
+						<option value="packets">Packets</option>
+						<option value="boxes">Boxes</option>
+						<option value="bottles">Bottles</option>
+					</select>
+					<label class="label">
+						<span class="label-text-alt">How do you measure this item?</span>
+					</label>
+				</div>
+
+				<div class="bg-base-300 p-4 rounded-lg">
+					<h4 class="font-semibold mb-2">Stock Information</h4>
+					<div class="grid grid-cols-2 gap-4 text-sm">
+						<div>
+							<span class="opacity-70">Current Stock:</span>
+							<span class="font-semibold ml-2">{{ raw_item.stock_qty }} units</span>
+						</div>
+						<div>
+							<span class="opacity-70">Stock Status:</span>
+							<span class="font-semibold ml-2 {% if raw_item.stock_qty <= 5 %}text-error{% elif raw_item.stock_qty <= 10 %}text-warning{% else %}text-success{% endif %}"> {% if raw_item.stock_qty <= 5 %}Low Stock{% elif raw_item.stock_qty <= 10 %}Medium{% else %}Good{% endif %} </span>
+						</div>
+					</div>
+				</div>
+
+				<div class="flex gap-4 pt-4">
+					<button type="submit" class="btn btn-primary flex-1">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+						</svg>
+						Update Raw Item
+					</button>
+					<a href="{{ url_for('owners.raw_items_page') }}" class="btn btn-outline">Cancel</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="alert alert-warning mt-6">
+		<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current flex-shrink-0 w-6 h-6">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+		</svg>
+		<div>
+			<h3 class="font-bold">Important:</h3>
+			<p class="text-sm">Updating the stock quantity here will override the current stock level. Use the "Update Stock" feature from the main page for incremental changes.</p>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

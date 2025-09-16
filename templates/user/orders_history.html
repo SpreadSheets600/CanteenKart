@@ -1,14 +1,22 @@
 {% extends 'base.html' %} {% block title %}My Orders - CanteenKart{% endblock %} {% block content %}
 <h1 class="text-2xl font-semibold mb-4">My Orders</h1>
+
 {% if orders %}
+<!-- Search/Filter Bar -->
+<div class="mb-4">
+	<input type="search" placeholder="Search by token or date..." class="input input-bordered w-full max-w-xs" id="orderSearch" />
+</div>
+
 <div class="card bg-base-200 shadow">
 	<div class="card-body">
 		<div class="overflow-x-auto">
-			<table class="table table-zebra">
+			<table class="table table-zebra" id="ordersTable">
 				<thead>
 					<tr>
 						<th>ID</th>
 						<th>Token</th>
+						<th>Items</th>
+						<th>Total</th>
 						<th>Status</th>
 						<th>Date</th>
 						<th></th>
@@ -19,11 +27,19 @@
 					<tr>
 						<td>#{{ o.order_id }}</td>
 						<td>{{ o.token_code }}</td>
-						<td><span class="badge {{ 'badge-warning' if o.status in ['pending','preparing'] else ('badge-success' if o.status in ['ready','completed'] else '') }}">{{ o.status }}</span></td>
-						<td>{{ o.created_at }}</td>
+						<td>
+							{% for item in o.items %}
+							<div class="text-sm opacity-80">{{ item.menu_item.name }} x{{ item.quantity }}</div>
+							{% endfor %}
+						</td>
+						<td>{% set total = 0 %} {% for item in o.items %} {% set total = total + item.price * item.quantity %} {% endfor %} ₹{{ '%.2f'|format(total) }}</td>
+						<td>
+							<span class="badge {% if o.status == 'pending' %}badge-warning{% elif o.status == 'preparing' %}badge-info{% elif o.status == 'ready' %}badge-success{% elif o.status == 'completed' %}badge-success{% elif o.status == 'cancelled' %}badge-error{% else %}badge-neutral{% endif %}">{{ o.status }}</span>
+						</td>
+						<td>{{ o.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
 						<td class="flex items-center gap-2">
 							<form method="post" action="{{ url_for('users.reorder', order_id=o.order_id) }}">
-								<button class="btn btn-sm" type="submit">Reorder</button>
+								<button class="btn btn-sm" type="submit" onclick="return confirm('Reorder this order?')">Reorder</button>
 							</form>
 							<a class="btn btn-ghost btn-sm" href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
 						</td>
@@ -36,4 +52,19 @@
 </div>
 {% else %}
 <div class="alert">No orders yet.</div>
-{% endif %} {% endblock %}
+{% endif %}
+
+<script>
+	// Simple client-side search functionality
+	document.getElementById("orderSearch").addEventListener("input", function () {
+		const searchTerm = this.value.toLowerCase();
+		const rows = document.querySelectorAll("#ordersTable tbody tr");
+
+		rows.forEach((row) => {
+			const text = row.textContent.toLowerCase();
+			row.style.display = text.includes(searchTerm) ? "" : "none";
+		});
+	});
+</script>
+
+{% endblock %}

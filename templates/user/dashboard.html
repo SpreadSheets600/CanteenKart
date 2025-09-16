@@ -1,82 +1,122 @@
-{% extends 'base.html' %}
-{% block content %}
-<h2 class="text-2xl font-semibold mb-4">User Dashboard</h2>
+{% extends 'base.html' %} {% block content %}
 
-<div class="grid md:grid-cols-3 gap-4">
-	<div class="md:col-span-2">
-		<div class="grid sm:grid-cols-3 gap-4 mb-4">
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Total Orders</div>
-				<div class="stat-value">{{ total_orders }}</div>
-			</div>
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Total Spent</div>
-				<div class="stat-value">₹{{ '%.2f'|format(total_spent) }}</div>
-			</div>
-			<div class="stat bg-base-200 rounded-box">
-				<div class="stat-title">Average Order</div>
-				<div class="stat-value">₹{{ '%.2f'|format(avg_order) }}</div>
-			</div>
-		</div>
+<h2 class="text-3xl font-bold mb-6">My Profile</h2>
 
-		<div class="card bg-base-200 shadow mb-4">
-			<div class="card-body">
-				<h3 class="card-title">Recent Orders</h3>
-				<ul class="space-y-2">
-					{% for o in orders %}
-					<li class="flex items-center justify-between">
-						<span>Order #{{ o.order_id }} - {{ o.status }} - {{ o.created_at }}</span>
-						<a class="btn btn-ghost btn-sm" href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
-					</li>
-					{% else %}
-					<li class="opacity-70">No recent orders.</li>
-					{% endfor %}
-				</ul>
-			</div>
-		</div>
+<div class="grid md:grid-cols-3 gap-6">
+  <!-- Left Column -->
+  <div class="space-y-6">
+    <!-- Profile Card -->
+    <div class="card bg-base-200 shadow">
+      <div class="card-body items-center text-center">
+        <div class="avatar">
+          <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <img src="{{ user.profile_picture or url_for('static', filename='default-avatar.svg') }}"
+              alt="User Avatar" />
+          </div>
+        </div>
+        <h3 class="text-xl font-semibold mt-2">{{ user.name }}</h3>
+        <p class="opacity-70 text-sm">{{ user.phone }}</p>
+      </div>
+    </div>
 
-		{% if last_order %}
-		<div class="card bg-base-200 shadow">
-			<div class="card-body">
-				<h3 class="card-title">Last Order Details (#{{ last_order.order_id }})</h3>
-				<ul class="space-y-1">
-					{% for oi in last_order_items %}
-					<li>{{ oi.menu_item.name if oi.menu_item else oi.item_id }} x {{ oi.quantity }} — ₹{{ '%.2f'|format((oi.price or 0.0) * (oi.quantity or 0)) }}</li>
-					{% endfor %}
-			</div>
-		</div>
-		{% endif %}
-	</div>
+    <!-- Wallet -->
+    <div class="card bg-base-200 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Wallet</h3>
+        {% if wallet %}
+        <div class="stats shadow mb-4">
+          <div class="stat">
+            <div class="stat-title">Balance</div>
+            <div class="stat-value text-primary">₹{{ '%.2f'|format(wallet.balance) }}</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-success w-full mb-2">Add Funds</button>
+        <h4 class="font-semibold mt-2">Recent Transactions</h4>
+        <ul class="text-sm space-y-1">
+          {% for txn in user.transactions[:3] %}
+          <li class="flex justify-between">
+            <span>{{ txn.txn_type }} — {{ txn.created_at|timeago }}</span>
+            <span class="{% if txn.amount > 0 %}text-green-500{% else %}text-red-500{% endif %}">₹{{
+              '%.2f'|format(txn.amount) }}</span>
+          </li>
+          {% else %}
+          <li class="opacity-70">No recent transactions</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="alert">No wallet found.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
-	<div>
-		<div class="card bg-base-200 shadow">
-			<div class="card-body">
-				<h3 class="card-title">Wallet</h3>
-				{% if wallet %}
-				<div class="stats shadow">
-					<div class="stat">
-						<div class="stat-title">Balance</div>
-						<div class="stat-value text-primary">₹{{ '%.2f'|format(wallet.balance) }}</div>
-					</div>
-				</div>
-				{% else %}
-				<div class="alert">No wallet found.</div>
-				{% endif %}
-			</div>
-		</div>
+  <!-- Right Column -->
+  <div class="md:col-span-2 space-y-6">
+    <!-- Stats -->
+    <div class="grid sm:grid-cols-4 gap-4">
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Total Orders</div>
+        <div class="stat-value">{{ total_orders }}</div>
+      </div>
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Total Spent</div>
+        <div class="stat-value">₹{{ '%.2f'|format(total_spent) }}</div>
+      </div>
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Average Order</div>
+        <div class="stat-value">₹{{ '%.2f'|format(avg_order) }}</div>
+      </div>
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Loyalty Points</div>
+        <div class="stat-value text-accent">{{ user.points or 0 }}</div>
+      </div>
+    </div>
 
-		<div class="card bg-base-200 shadow mt-4">
-			<div class="card-body">
-				<h3 class="card-title">Recent Activity</h3>
-				<ul class="space-y-1">
-					{% for a in activities %}
-					<li class="text-sm">{{ a.created_at }} - {{ a.action }} - Item: {{ a.menu_item.name if a.menu_item else a.item_id }}</li>
-					{% else %}
-					<li class="opacity-70">No recent activity.</li>
-					{% endfor %}
-				</ul>
-			</div>
-		</div>
-	</div>
+    <!-- Active Order -->
+    {% if active_order %}
+    <div class="card bg-base-200 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Active Order</h3>
+        <div class="flex justify-between items-center">
+          <span>Order #{{ active_order.order_id }} — <span
+              class="badge {% if active_order.status == 'pending' %}badge-warning{% elif active_order.status == 'preparing' %}badge-info{% elif active_order.status == 'ready' %}badge-success{% elif active_order.status == 'completed' %}badge-success{% elif active_order.status == 'cancelled' %}badge-error{% else %}badge-neutral{% endif %}">{{
+              active_order.status }}</span></span>
+          <a class="btn btn-sm btn-ghost"
+            href="{{ url_for('cart.order_status', order_id=active_order.order_id) }}">Track</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Orders -->
+    <div class="card bg-base-200 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Recent Orders</h3>
+        <ul class="space-y-2">
+          {% for o in orders %}
+          <li class="flex justify-between items-center">
+            <div>
+              <span class="font-medium">#{{ o.order_id }}</span>
+              — <span
+                class="badge {% if o.status == 'pending' %}badge-warning{% elif o.status == 'preparing' %}badge-info{% elif o.status == 'ready' %}badge-success{% elif o.status == 'completed' %}badge-success{% elif o.status == 'cancelled' %}badge-error{% else %}badge-neutral{% endif %}">{{
+                o.status }}</span>
+              <span class="text-sm opacity-60 ml-2">{{ o.created_at|timeago }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-semibold">₹{% set total = namespace(value=0) %}{% for item in o.items %}{% set
+                total.value = total.value + (item.price or 0) * (item.quantity or 0) %}{% endfor %}{{
+                '%.2f'|format(total.value) }}</span>
+              <a class="btn btn-xs btn-ghost" href="{{ url_for('cart.order_status', order_id=o.order_id) }}">View</a>
+              <button class="btn btn-xs btn-outline">Reorder</button>
+            </div>
+          </li>
+          {% else %}
+          <li class="opacity-70">No recent orders.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
+
 {% endblock %}

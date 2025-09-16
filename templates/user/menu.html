@@ -3,22 +3,80 @@
 	<h1 class="text-2xl font-semibold">Menu</h1>
 	<a href="{{ url_for('cart.show_cart') }}" class="btn btn-sm">View Cart</a>
 </div>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+<!-- Search And Filter Bar -->
+<div class="mb-4 flex gap-2">
+	<input type="search" placeholder="Search menu..." class="input input-bordered flex-1" id="menuSearch" />
+	<select class="select select-bordered" id="categoryFilter">
+		<option value="">All Categories</option>
+	</select>
+</div>
+
+<!-- User Recommendations Section -->
+{% if user_recommendations %}
+<div class="mb-8">
+	<h2 class="text-xl font-semibold mb-4">Recommended for You</h2>
+	<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+		{% for item in user_recommendations %}
+		<div class="card bg-base-200 shadow h-full">
+			<div class="card-body">
+				{% if item.image %}
+				<img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="rounded-md mb-2 w-full h-32 object-cover" />
+				{% endif %}
+				<div class="flex items-start justify-between gap-3">
+					<h3 class="card-title text-lg">{{ item.name }}</h3>
+					<div class="badge badge-ghost">₹{{ '%.2f'|format(item.price) }}</div>
+				</div>
+				{% if item.description %}
+				<p class="text-sm opacity-80">{{ item.description }}</p>
+				{% endif %}
+				<div class="flex items-center justify-between mt-auto">
+					<div class="badge badge-info">Recommended</div>
+					<div class="card-actions">
+						<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post" class="flex items-center gap-2">
+							<input type="number" name="qty" value="1" min="1" class="input input-sm w-16" />
+							<button type="submit" class="btn btn-primary btn-sm">Add</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endif %}
+
+<h2 class="text-xl font-semibold mb-4">Menu</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="menuGrid">
 	{% for item in items %}
-	<div class="card bg-base-200 shadow h-full">
+	<div class="card bg-base-200 shadow h-full menu-item" data-name="{{ item.name|lower }}" data-description="{{ item.description|lower if item.description }}">
 		<div class="card-body">
+			{% if item.image %}
+			<img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}" class="rounded-md mb-2 w-full h-32 object-cover" />
+			{% endif %}
 			<div class="flex items-start justify-between gap-3">
 				<h3 class="card-title text-lg">{{ item.name }}</h3>
-				<div class="badge badge-ghost">₹{{ '%.2f'|format(item.price) }}</div>
+				<div class="badge badge-ghost">
+					{% if user and user.email and user.role == 'student' %}
+					<s>₹{{ '%.2f'|format(item.price) }}</s> ₹{{ '%.2f'|format(item.price * 0.9) }} {% else %} ₹{{ '%.2f'|format(item.price) }} {% endif %}
+				</div>
 			</div>
 			{% if item.description %}
 			<p class="text-sm opacity-80">{{ item.description }}</p>
 			{% endif %}
 			<div class="flex items-center justify-between mt-auto">
-				<div class="text-xs opacity-70">Stock: {{ item.stock_qty }}</div>
+				<div
+					class="badge 
+					{{ 'badge-error' if item.stock_qty == 0 
+					else 'badge-warning' if item.stock_qty < 5 
+					else 'badge-success' }}"
+				>
+					{{ item.stock_qty > 0 and (item.stock_qty ~ ' left') or 'Out of stock' }}
+				</div>
 				<div class="card-actions">
 					{% if item.is_available and item.stock_qty > 0 %}
-					<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post">
+					<form action="{{ url_for('cart.add_to_cart', item_id=item.item_id) }}" method="post" class="flex items-center gap-2">
+						<input type="number" name="qty" value="1" min="1" max="{{ item.stock_qty }}" class="input input-sm w-16" />
 						<button type="submit" class="btn btn-primary btn-sm">Add</button>
 					</form>
 					{% else %}
@@ -30,4 +88,26 @@
 	</div>
 	{% endfor %}
 </div>
+
+<script>
+	// Search and filter functionality
+	document.getElementById("menuSearch").addEventListener("input", filterItems);
+	document.getElementById("categoryFilter").addEventListener("change", filterItems);
+
+	function filterItems() {
+		const searchTerm = document.getElementById("menuSearch").value.toLowerCase();
+		const categoryFilter = document.getElementById("categoryFilter").value.toLowerCase();
+		const items = document.querySelectorAll(".menu-item");
+
+		items.forEach((item) => {
+			const name = item.dataset.name;
+			const description = item.dataset.description || "";
+			const matchesSearch = name.includes(searchTerm) || description.includes(searchTerm);
+			const matchesCategory = !categoryFilter || true; // Add category logic later
+
+			item.style.display = matchesSearch && matchesCategory ? "" : "none";
+		});
+	}
+</script>
+
 {% endblock %}

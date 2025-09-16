@@ -4,8 +4,8 @@
 		<div class="card-body">
 			<h2 class="card-title">Create your account</h2>
 			<form method="post" action="{{ url_for('auth.register') }}" class="space-y-3">
-				{% from 'components/forms.html' import text %} {{ text('phone', 'Phone (10 digits)', '', 'tel', '9876543210', true, {'maxlength':10}) }} {{ text('name', 'Name', '', 'text', 'Your Name', true) }} {{ text('password', 'Password', '', 'password', '••••••••', true) }} {{ text('password2', 'Confirm Password', '', 'password', '••••••••', true) }}
-				<div class="card-actions justify-end">
+				{% from 'components/forms.html' import text %} {{ text('phone', 'Phone (10 digits)', '', 'tel', '9876543210', true, {'maxlength':10}) }} {{ text('name', 'Name', '', 'text', 'Your Name', true) }} {{ text('email', 'Email (optional)', '', 'email', 'your@email.com', false) }} {{ text('password', 'Password', '', 'password', '••••••••', true) }} {{ text('password2', 'Confirm Password', '', 'password', '••••••••', true) }}
+				<div class="card-actions">
 					<button type="submit" class="btn btn-primary">Sign Up</button>
 				</div>
 			</form>

@@ -1,9 +1,93 @@
 {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
-<div class="space-y-2 my-3">
+<div class="toast toast-top toast-end z-50">
 	{% for category, msg in messages %} {% set cat = category or 'info' %}
-	<div class="alert {{ 'alert-success' if cat in ['success'] else ('alert-error' if cat in ['danger','error'] else ('alert-warning' if cat in ['warning'] else 'alert-info')) }}">
-		<span>{{ msg }}</span>
+	<div class="alert {{ 'alert-success' if cat in ['success'] else ('alert-error' if cat in ['danger','error'] else ('alert-warning' if cat in ['warning'] else 'alert-info')) }} shadow-lg border-l-4 transform transition-all duration-300 ease-in-out hover:scale-105">
+		<div class="flex items-center gap-3">
+			<!-- Icon based on category -->
+			{% if cat in ['success'] %}
+			<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			{% elif cat in ['danger', 'error'] %}
+			<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			{% elif cat in ['warning'] %}
+			<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+			</svg>
+			{% else %}
+			<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+			{% endif %}
+
+			<!-- Message -->
+			<div class="flex-1">
+				<span class="font-medium">{{ msg }}</span>
+			</div>
+
+			<!-- Close button -->
+			<button class="btn btn-sm btn-circle btn-ghost" onclick="this.parentElement.parentElement.remove()">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</div>
 	</div>
 	{% endfor %}
 </div>
 {% endif %} {% endwith %}
+
+<style>
+	/* Custom animations for alerts */
+	.alert {
+		animation: slideInRight 0.3s ease-out;
+	}
+
+	@keyframes slideInRight {
+		from {
+			transform: translateX(100%);
+			opacity: 0;
+		}
+		to {
+			transform: translateX(0);
+			opacity: 1;
+		}
+	}
+
+	/* Enhanced alert styles */
+	.alert-success {
+		background: linear-gradient(135deg, #10b981, #059669);
+		color: white;
+		border-color: #059669;
+	}
+
+	.alert-error {
+		background: linear-gradient(135deg, #ef4444, #dc2626);
+		color: white;
+		border-color: #dc2626;
+	}
+
+	.alert-warning {
+		background: linear-gradient(135deg, #f59e0b, #d97706);
+		color: white;
+		border-color: #d97706;
+	}
+
+	.alert-info {
+		background: linear-gradient(135deg, #3b82f6, #2563eb);
+		color: white;
+		border-color: #2563eb;
+	}
+
+	/* Hover effects */
+	.alert:hover {
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+	}
+
+	/* Close button hover */
+	.alert .btn-ghost:hover {
+		background-color: rgba(255, 255, 255, 0.2);
+	}
+</style>

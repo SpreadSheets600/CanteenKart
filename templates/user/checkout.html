@@ -1,6 +1,11 @@
 {% extends 'base.html' %} {% block title %}Checkout - CanteenKart{% endblock %} {% block content %}
 <h1 class="text-2xl font-semibold mb-4">Checkout</h1>
-<form method="post" class="grid md:grid-cols-3 gap-4">
+<a href="{{ url_for('menu.menu') }}" class="link mb-4 inline-block">&larr; Back to Menu</a>
+
+{% if not items %}
+<div class="alert alert-warning">Your cart is empty.</div>
+{% else %}
+<form id="checkoutForm" method="post" action="{{ url_for('cart.checkout') }}" class="grid md:grid-cols-3 gap-4">
 	<div class="md:col-span-2">
 		<div class="card bg-base-200 shadow">
 			<div class="card-body">
@@ -8,7 +13,7 @@
 				<ul class="space-y-2">
 					{% for row in items %}
 					<li class="flex items-center justify-between">
-						<span>{{ row.item.name }} x {{ row.qty }}</span>
+						<span>{{ row.item.name }} (₹{{ '%.2f'|format(row.item.price) }}) x {{ row.qty }}</span>
 						<span>₹{{ '%.2f'|format(row.subtotal) }}</span>
 					</li>
 					{% endfor %}
@@ -19,13 +24,150 @@
 	<div>
 		<div class="card bg-base-200 shadow">
 			<div class="card-body">
+				<h3 class="card-title">Order Summary</h3>
 				<div class="text-lg">Total: <span class="font-semibold">₹{{ '%.2f'|format(total) }}</span></div>
-				{% from 'components/forms.html' import select %} {{ select('pickup_slot', 'Pickup Slot', [('slot1','In 10 minutes'),('slot2','In 20 minutes'),('slot3','In 30 minutes')], 'slot1', true) }}
-				<div class="card-actions justify-end">
-					<button type="submit" class="btn btn-primary">Place Order</button>
+				<div class="form-control mt-4">
+					<label class="label">
+						<span class="label-text">Pickup Slot</span>
+					</label>
+					<select id="pickupSlotSelect" name="pickup_slot" class="select select-bordered w-full" required>
+						{% for value, label in slots %}
+						<option value="{{ value }}">{{ label }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="card-actions justify-end mt-4">
+					<button id="placeBtn" type="submit" class="btn btn-primary">Place Order</button>
 				</div>
 			</div>
 		</div>
 	</div>
 </form>
-{% endblock %}
+{% endif %} {% endblock %}
+
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		const btn = document.getElementById("placeBtn");
+		const form = document.getElementById("checkoutForm");
+		if (!btn || !form) return;
+
+		form.addEventListener("submit", function (e) {
+			e.preventDefault();
+
+			if (!form.checkValidity()) {
+				form.reportValidity();
+				return;
+			}
+
+			// Set loading state
+			btn.disabled = true;
+			const originalText = btn.innerHTML;
+			btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Placing Order...';
+
+			// Log the submission
+			const sel = document.getElementById("pickupSlotSelect");
+			const selVal = sel ? sel.value : null;
+			console.log("Form submitting - pickup_slot:", selVal, "time:", new Date().toISOString());
+
+			// Submit the form
+			form.submit();
+		});
+
+		// Log when the form actually submits (submit event)
+		form.addEventListener("submit", function (ev) {
+			console.log("checkout form submit event fired at", new Date().toISOString());
+			try {
+				const fd = new FormData(form);
+				const entries = {};
+				for (const [k, v] of fd.entries()) entries[k] = v;
+				console.log("checkout form data:", entries);
+			} catch (e) {
+				console.error("Failed to read checkout form data:", e);
+			}
+		});
+	});
+
+	// Debug XHR submit button
+	const debugBtn = document.getElementById("debugSubmitBtn");
+	if (debugBtn) {
+		debugBtn.addEventListener("click", async function () {
+			const fd = new FormData(form);
+			console.log("Debug XHR submit form data:");
+			for (const [k, v] of fd.entries()) console.log(k, v);
+
+			try {
+				const resp = await fetch(form.action || window.location.pathname, {
+					method: form.method || "POST",
+					body: fd,
+				});
+				console.log("Debug fetch response", resp.status, resp.statusText);
+				const text = await resp.text();
+				console.log("Response body (truncated 200 chars):", text.slice(0, 200));
+				// show a small banner with result
+				let banner = document.getElementById("debugResultBanner");
+				if (!banner) {
+					banner = document.createElement("div");
+					banner.id = "debugResultBanner";
+					banner.className = "fixed bottom-4 right-4 bg-white border p-3 shadow";
+					document.body.appendChild(banner);
+				}
+				banner.innerText = `Status: ${resp.status} ${resp.statusText} | Body (start): ${text.slice(0, 200)}`;
+			} catch (err) {
+				console.error("Debug XHR submit failed:", err);
+				alert("Debug submit failed: " + err);
+			}
+		});
+	}
+</script>
+
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		// Populate pickup slot select based on client's current time
+		const select = document.getElementById("pickupSlotSelect");
+		if (!select) return;
+
+		// Offsets in minutes
+		const offsets = [10, 30, 45, 60, 90];
+		const now = new Date();
+
+		// Show device time and timezone for debugging (helps identify clock/timezone mismatch)
+		try {
+			const info = document.createElement("div");
+			info.className = "text-sm text-gray-600 mb-2";
+			const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "local";
+			const offsetHours = -(now.getTimezoneOffset() / 60);
+			info.textContent = `Device time: ${now.toLocaleString()} (TZ: ${tz}, offset: ${offsetHours >= 0 ? "+" : ""}${offsetHours}h)`;
+			select.parentElement.insertBefore(info, select);
+		} catch (e) {
+			// ignore
+		}
+
+		// Helper to format HH:MM 24h value
+		function toHHMM(date) {
+			const hh = String(date.getHours()).padStart(2, "0");
+			const mm = String(date.getMinutes()).padStart(2, "0");
+			return `${hh}:${mm}`;
+		}
+
+		// Build options using locale-aware clock formatting
+		select.innerHTML = "";
+		offsets.forEach((mins) => {
+			const slot = new Date(now.getTime() + mins * 60000);
+
+			let relLabel = "";
+			if (mins < 60) relLabel = `In ${mins} min`;
+			else if (mins === 60) relLabel = "In 1 hour";
+			else relLabel = `In ${mins / 60} hrs`;
+
+			const value = toHHMM(slot);
+			// Use toLocaleTimeString to format according to user's locale/timezone
+			const clock = slot.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+			const label = `${relLabel} (${clock})`;
+
+			const opt = document.createElement("option");
+			opt.value = value;
+			opt.textContent = label;
+			select.appendChild(opt);
+		});
+	});
+</script>

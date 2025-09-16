@@ -7,7 +7,7 @@
 			<div class="card-body">
 				<div class="flex items-center justify-between">
 					<h1 class="card-title">Order #{{ order.order_id }}</h1>
-					<div id="status" class="badge badge-lg {{ 'badge-warning' if order.status in ['pending','preparing'] else ('badge-success' if order.status in ['ready','completed'] else 'badge-ghost') }}">{{ order.status }}</div>
+					<div id="status" class="badge badge-lg {% if order.status == 'pending' %}badge-warning{% elif order.status == 'preparing' %}badge-info{% elif order.status == 'ready' %}badge-success{% elif order.status == 'completed' %}badge-success{% elif order.status == 'cancelled' %}badge-error{% else %}badge-neutral{% endif %}">{{ order.status }}</div>
 				</div>
 				<div class="flex items-center gap-2">
 					<span class="opacity-80">Token:</span>
@@ -17,6 +17,50 @@
 				<div class="mt-4 text-sm opacity-70">You'll be notified on this page when your order status changes.</div>
 				<div class="mt-2"><a class="link" href="{{ url_for('users.orders_history') }}">View all my orders</a></div>
 			</div>
+		</div>
+
+		<!-- Order Summary -->
+		<div class="card bg-base-200 shadow mt-4">
+			<div class="card-body">
+				<h2 class="card-title">Items Ordered</h2>
+				<ul class="divide-y divide-base-300">
+					{% for item in order.items %}
+					<li class="py-2 flex justify-between">
+						<div>
+							<span class="font-medium">{{ item.menu_item.name }}</span>
+							<span class="ml-2 opacity-70 text-sm">x{{ item.quantity }}</span>
+						</div>
+						<span class="font-semibold">₹{{ '%.2f'|format(item.price * item.quantity) }}</span>
+					</li>
+					{% endfor %}
+				</ul>
+				{% set total = 0 %} {% for item in order.items %} {% set total = total + item.price * item.quantity %} {% endfor %}
+				<div class="mt-3 flex justify-between border-t pt-2">
+					<span class="font-bold">Total</span>
+					<span class="font-bold text-primary">₹{{ '%.2f'|format(total) }}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Progress Timeline -->
+		<div class="card bg-base-200 shadow mt-4">
+			<div class="card-body">
+				<h2 class="card-title">Order Progress</h2>
+				<ul class="steps steps-vertical lg:steps-horizontal">
+					<li class="step {% if order.status in ['pending','preparing','ready','completed'] %}step-primary{% endif %}">Pending</li>
+					<li class="step {% if order.status in ['preparing','ready','completed'] %}step-primary{% endif %}">Preparing</li>
+					<li class="step {% if order.status in ['ready','completed'] %}step-primary{% endif %}">Ready</li>
+					<li class="step {% if order.status == 'completed' %}step-primary{% endif %}">Completed</li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- Time Information -->
+		<div class="mt-4 text-sm opacity-70">
+			<p>Order placed: {{ order.created_at|timeago }}</p>
+			{% if order.pickup_slot %}
+			<p>Pickup slot: {{ order.pickup_slot }}</p>
+			{% endif %}
 		</div>
 	</div>
 	<div>
@@ -47,7 +91,26 @@
 		if (data && data.order_id === THIS_ORDER_ID) {
 			const el = document.getElementById("status");
 			el.innerText = data.status;
-			el.className = "badge badge-lg " + (["ready", "completed"].includes(data.status) ? "badge-success" : ["pending", "preparing"].includes(data.status) ? "badge-warning" : "badge-ghost");
+
+			// Update badge color based on status
+			let badgeClass = "badge badge-lg ";
+			if (data.status === "pending") badgeClass += "badge-warning";
+			else if (data.status === "preparing") badgeClass += "badge-info";
+			else if (data.status === "ready") badgeClass += "badge-success";
+			else if (data.status === "completed") badgeClass += "badge-success";
+			else if (data.status === "cancelled") badgeClass += "badge-error";
+			else badgeClass += "badge-neutral";
+
+			el.className = badgeClass;
+
+			const steps = document.querySelectorAll(".steps .step");
+			steps.forEach((step, index) => {
+				step.classList.remove("step-primary");
+				if (index === 0 && ["pending", "preparing", "ready", "completed"].includes(data.status)) step.classList.add("step-primary");
+				if (index === 1 && ["preparing", "ready", "completed"].includes(data.status)) step.classList.add("step-primary");
+				if (index === 2 && ["ready", "completed"].includes(data.status)) step.classList.add("step-primary");
+				if (index === 3 && data.status === "completed") step.classList.add("step-primary");
+			});
 		}
 	});
 </script>
